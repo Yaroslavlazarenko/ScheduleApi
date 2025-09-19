@@ -1,4 +1,6 @@
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using ScheduleApi.Application;
 using ScheduleApi.ExceptionHandlers;
 using ScheduleBotApi.Infrastructure.Contexts;
 
@@ -12,6 +14,8 @@ var connectionString = builder.Configuration.GetConnectionString("DefaultConnect
 builder.Services.AddDbContext<ScheduleContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddGlobalExceptionHandlers();
+builder.Services.AddAutoMapper(typeof(IApplicationAssemblyMarker).Assembly);
+builder.Services.AddMediatR(typeof(IApplicationAssemblyMarker));
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
