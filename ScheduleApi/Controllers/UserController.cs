@@ -36,4 +36,14 @@ public class UserController : ControllerBase
         
         return Ok(userDto);
     }
+    
+    [HttpGet("telegram/{telegramId:long}")]
+    [ProducesResponseType(typeof(UserDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetUserByTelegramId(long telegramId)
+    {
+        var userDto = await _mediator.Send(new GetUserByTelegramId.Query(telegramId));
+        
+        return Ok(userDto);
+    }
 }
