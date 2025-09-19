@@ -10,8 +10,6 @@ public class SubjectInfoConfiguration : IEntityTypeConfiguration<SubjectInfo>
     {
         builder.HasKey(si => new { si.SubjectId, si.InfoTypeId });
 
-        builder.Property(si => si.Value).IsRequired();
-
         builder.HasOne(si => si.Subject)
             .WithMany(s => s.SubjectInfos)
             .HasForeignKey(si => si.SubjectId);

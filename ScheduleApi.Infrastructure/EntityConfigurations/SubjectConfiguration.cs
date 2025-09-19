@@ -10,8 +10,6 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
     {
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id).ValueGeneratedOnAdd();
-        builder.Property(s => s.Name).IsRequired();
-        builder.Property(s => s.SubjectTypeId).IsRequired();
 
         builder.HasIndex(s => new { s.Name, s.SubjectTypeId }).IsUnique();
 

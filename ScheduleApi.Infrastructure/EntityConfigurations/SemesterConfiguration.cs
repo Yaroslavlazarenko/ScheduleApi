@@ -10,8 +10,6 @@ public class SemesterConfiguration : IEntityTypeConfiguration<Semester>
     {
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id).ValueGeneratedOnAdd();
-        builder.Property(s => s.StartDate).IsRequired();
-        builder.Property(s => s.EndDate).IsRequired();
 
         builder.HasIndex(s => new { s.StartDate, s.EndDate }).IsUnique();
     }

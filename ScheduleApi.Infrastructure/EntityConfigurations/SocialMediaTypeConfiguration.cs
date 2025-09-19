@@ -10,6 +10,5 @@ public class SocialMediaTypeConfiguration : IEntityTypeConfiguration<SocialMedia
     {
         builder.HasKey(smt => smt.Id);
         builder.Property(smt => smt.Id).ValueGeneratedOnAdd();
-        builder.Property(smt => smt.Name).IsRequired();
     }
 }

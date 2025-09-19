@@ -14,16 +14,12 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         
         builder.HasIndex(u => u.TelegramId).IsUnique();
 
-        builder.Property(s => s.GroupId).IsRequired();
-        builder.Property(s => s.RegionId).IsRequired();
-        builder.Property(s => s.IsAdmin).IsRequired();
-
         builder.HasOne(s => s.Group)
             .WithMany(g => g.Users)
             .HasForeignKey(s => s.GroupId);
 
         builder.HasOne(s => s.Region)
-            .WithMany(tz => tz.Students)
+            .WithMany(tz => tz.Users)
             .HasForeignKey(s => s.RegionId);
     }
 }

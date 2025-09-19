@@ -10,8 +10,5 @@ public class PairConfiguration : IEntityTypeConfiguration<Pair>
     {
         builder.HasKey(p => p.Id);
         builder.Property(p => p.Id).ValueGeneratedOnAdd();
-        builder.Property(p => p.Number).IsRequired();
-        builder.Property(p => p.StartTime).IsRequired();
-        builder.Property(p => p.EndTime).IsRequired();
     }
 }

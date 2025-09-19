@@ -10,8 +10,6 @@ public class TeacherInfoConfiguration : IEntityTypeConfiguration<TeacherInfo>
     {
         builder.HasKey(ti => new { ti.TeacherId, ti.InfoTypeId });
 
-        builder.Property(ti => ti.Value).IsRequired();
-
         builder.HasOne(ti => ti.Teacher)
             .WithMany(t => t.TeacherInfos)
             .HasForeignKey(ti => ti.TeacherId);

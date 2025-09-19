@@ -10,6 +10,5 @@ public class SubjectTypeConfiguration : IEntityTypeConfiguration<SubjectType>
     {
         builder.HasKey(st => st.Id);
         builder.Property(st => st.Id).ValueGeneratedOnAdd();
-        builder.Property(st => st.Name).IsRequired();
     }
 }

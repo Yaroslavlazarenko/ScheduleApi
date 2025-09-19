@@ -10,6 +10,5 @@ public class RegionConfiguration : IEntityTypeConfiguration<Region>
     {
         builder.HasKey(tz => tz.Id);
         builder.Property(tz => tz.Id).ValueGeneratedOnAdd();
-        builder.Property(tz => tz.Number).IsRequired();
     }
 }

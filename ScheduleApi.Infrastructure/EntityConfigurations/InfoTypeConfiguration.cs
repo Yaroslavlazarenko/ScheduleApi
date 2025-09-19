@@ -8,10 +8,7 @@ public class InfoTypeConfiguration : IEntityTypeConfiguration<InfoType>
 {
     public void Configure(EntityTypeBuilder<InfoType> builder)
     {
-        builder.ToTable("InfoTypes");
-
         builder.HasKey(it => it.Id);
         builder.Property(it => it.Id).ValueGeneratedOnAdd();
-        builder.Property(it => it.Name).IsRequired();
     }
 }

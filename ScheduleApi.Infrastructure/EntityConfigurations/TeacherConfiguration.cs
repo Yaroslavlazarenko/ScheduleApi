@@ -11,8 +11,5 @@ public class TeacherConfiguration : IEntityTypeConfiguration<Teacher>
     {
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Id).ValueGeneratedOnAdd();
-        builder.Property(t => t.FirstName).IsRequired();
-        builder.Property(t => t.LastName).IsRequired();
-        builder.Property(t => t.MiddleName).IsRequired();
     }
 }

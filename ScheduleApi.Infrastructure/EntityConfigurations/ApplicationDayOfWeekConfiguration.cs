@@ -10,6 +10,5 @@ public class ApplicationDayOfWeekConfiguration : IEntityTypeConfiguration<Applic
     {
         builder.HasKey(d => d.Id);
         builder.Property(d => d.Id).ValueGeneratedOnAdd();
-        builder.Property(d => d.Name).IsRequired();
     }
 }

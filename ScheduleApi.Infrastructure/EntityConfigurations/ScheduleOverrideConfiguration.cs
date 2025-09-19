@@ -10,8 +10,6 @@ public class ScheduleOverrideConfiguration : IEntityTypeConfiguration<ScheduleOv
     {
         builder.HasKey(so => so.Id);
         builder.Property(so => so.Id).ValueGeneratedOnAdd();
-        builder.Property(so => so.OverrideDate).IsRequired();
-        builder.Property(so => so.OverrideTypeId).IsRequired();
 
         builder.HasOne(so => so.OverrideType)
             .WithMany(ot => ot.ScheduleOverrides)

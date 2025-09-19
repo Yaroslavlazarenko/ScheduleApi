@@ -12,13 +12,6 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
 
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id).ValueGeneratedOnAdd();
-        builder.Property(s => s.ApplicationDayOfWeekId).IsRequired();
-        builder.Property(s => s.PairId).IsRequired();
-        builder.Property(s => s.GroupId).IsRequired();
-        builder.Property(s => s.TeacherId).IsRequired();
-        builder.Property(s => s.SubjectId).IsRequired();
-        builder.Property(s => s.IsEvenWeek).IsRequired();
-        builder.Property(s => s.SemesterId).IsRequired();
 
         builder.HasIndex(s => new { s.ApplicationDayOfWeekId, s.PairId, s.GroupId }).IsUnique();
 

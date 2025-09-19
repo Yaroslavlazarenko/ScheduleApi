@@ -10,6 +10,5 @@ public class OverrideTypeConfiguration : IEntityTypeConfiguration<OverrideType>
     {
         builder.HasKey(ot => ot.Id);
         builder.Property(ot => ot.Id).ValueGeneratedOnAdd();
-        builder.Property(ot => ot.Name).IsRequired();
     }
 }
