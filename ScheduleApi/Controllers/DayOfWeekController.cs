@@ -8,11 +8,11 @@ namespace ScheduleApi.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class DaysOfWeekController : ControllerBase
+public class DayOfWeekController : ControllerBase
 {
     private readonly IMediator _mediator;
 
-    public DaysOfWeekController(IMediator mediator)
+    public DayOfWeekController(IMediator mediator)
     {
         _mediator = mediator;
     }

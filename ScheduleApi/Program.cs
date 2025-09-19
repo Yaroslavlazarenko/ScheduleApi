@@ -15,7 +15,8 @@ builder.Services.AddDbContext<ScheduleContext>(options => options.UseNpgsql(conn
 
 builder.Services.AddGlobalExceptionHandlers();
 builder.Services.AddAutoMapper(typeof(IApplicationAssemblyMarker).Assembly);
-builder.Services.AddMediatR(typeof(IApplicationAssemblyMarker));
+builder.Services.AddMediatR(typeof(IApplicationAssemblyMarker).Assembly);
+builder.Services.AddControllers();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
