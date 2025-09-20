@@ -1,8 +1,10 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ScheduleApi.Application.DTOs.InfoType;
+using ScheduleApi.Application.DTOs.SubjectInfo;
 using ScheduleApi.Application.Features.InfoType.Commands;
 using ScheduleApi.Application.Features.InfoType.Queries;
+using ScheduleApi.Application.Features.SubjectInfo.Commands;
 
 namespace ScheduleApi.Controllers;
 
@@ -42,5 +44,16 @@ public class InfoTypesController : ControllerBase
     {
         var result = await _mediator.Send(new GetInfoTypeById.Query(id));
         return Ok(result);
+    }
+    
+    [HttpPost("{subjectId:int}/info")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> AddInfoToSubject(int subjectId, [FromBody] CreateSubjectInfoDto createDto)
+    {
+        await _mediator.Send(new AddInfoToSubject.Command(subjectId, createDto));
+        
+        return NoContent();
     }
 }

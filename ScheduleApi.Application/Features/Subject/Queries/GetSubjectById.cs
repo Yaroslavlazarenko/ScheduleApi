@@ -26,7 +26,9 @@ public static class GetSubjectById
         {
             var subject = await _ctx.Subjects
                 .AsNoTracking()
-                .Include(s => s.SubjectType) 
+                .Include(s => s.SubjectType)
+                .Include(s => s.SubjectInfos)
+                .ThenInclude(si => si.InfoType)
                 .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
 
             if (subject is null)

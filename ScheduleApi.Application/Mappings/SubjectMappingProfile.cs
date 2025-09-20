@@ -11,6 +11,8 @@ public class SubjectMappingProfile : Profile
         
         CreateMap<Core.Entities.Subject, SubjectDto>()
             .ForMember(dest => dest.SubjectTypeName, 
-                opt => opt.MapFrom(src => src.SubjectType.Name));
+                opt => opt.MapFrom(src => src.SubjectType.Name))
+            .ForMember(dest => dest.Infos,
+                opt => opt.MapFrom(src => src.SubjectInfos));
     }
 }
