@@ -7,6 +7,7 @@ public class DailyScheduleDto
     public DateOnly Date { get; set; }
     public string DayOfWeekName { get; set; }
     public string DayOfWeekAbbreviation { get; set; }
+    public string GroupName { get; set; }
     public int WeekNumber { get; set; }
     public bool IsEvenWeek { get; set; }
     

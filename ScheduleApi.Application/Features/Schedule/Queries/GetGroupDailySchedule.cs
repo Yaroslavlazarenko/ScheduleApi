@@ -26,6 +26,14 @@ public static class GetGroupDailySchedule
 
         public async Task<DailyScheduleDto> Handle(Query request, CancellationToken cancellationToken)
         {
+            var group = await _ctx.Groups.AsNoTracking()
+                .FirstOrDefaultAsync(g => g.Id == request.GroupId, cancellationToken);
+
+            if (group is null)
+            {
+                throw new NotFoundException($"Group with ID {request.GroupId} was not found.");
+            }
+            
             TimeZoneInfo groupTimeZone;
             try
             {
@@ -47,7 +55,7 @@ public static class GetGroupDailySchedule
                 .FirstOrDefaultAsync(s => s.StartDate <= targetDateTimeForQuery && s.EndDate >= targetDateTimeForQuery, cancellationToken);
 
             if (semester is null)
-                return CreateHeaderOnlySchedule(targetDate, actualDayOfWeekEntity);
+                return CreateHeaderOnlySchedule(targetDate, actualDayOfWeekEntity, group);
 
             var semesterStartDate = DateOnly.FromDateTime(semester.StartDate.ToUniversalTime());
             var weekNumber = CalculateWeekNumber(semesterStartDate, targetDate);
@@ -89,6 +97,7 @@ public static class GetGroupDailySchedule
                 Date = targetDate,
                 DayOfWeekName = actualDayOfWeekEntity.Name,
                 DayOfWeekAbbreviation = actualDayOfWeekEntity.Abbreviation,
+                GroupName = group.Name,
                 WeekNumber = weekNumber,
                 IsEvenWeek = isEvenWeek,
                 Lessons = lessonsWithGroupTime,
@@ -100,13 +109,14 @@ public static class GetGroupDailySchedule
             };
         }
         
-        private DailyScheduleDto CreateHeaderOnlySchedule(DateOnly targetDate, Core.Entities.ApplicationDayOfWeek dayOfWeekEntity)
+        private DailyScheduleDto CreateHeaderOnlySchedule(DateOnly targetDate, Core.Entities.ApplicationDayOfWeek dayOfWeekEntity, Core.Entities.Group group)
         {
             return new DailyScheduleDto
             {
                 Date = targetDate,
                 DayOfWeekName = dayOfWeekEntity.Name,
                 DayOfWeekAbbreviation = dayOfWeekEntity.Abbreviation,
+                GroupName = group.Name,
                 WeekNumber = 1,
                 IsEvenWeek = false,
                 Lessons = new List<LessonDto>()
