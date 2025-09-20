@@ -50,7 +50,7 @@ public class UserController : ControllerBase
     }
     
     [HttpGet("{userId:int}/schedule")]
-    [ProducesResponseType(typeof(List<ScheduleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<DailyScheduleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetScheduleForDay(int userId, [FromQuery] DateTime? date)
     {
