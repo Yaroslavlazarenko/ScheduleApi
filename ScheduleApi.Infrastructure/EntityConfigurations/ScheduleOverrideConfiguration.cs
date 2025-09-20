@@ -17,10 +17,12 @@ public class ScheduleOverrideConfiguration : IEntityTypeConfiguration<ScheduleOv
 
         builder.HasOne(so => so.SubstituteDayOfWeek)
             .WithMany(d => d.ScheduleOverrides)
-            .HasForeignKey(so => so.SubstituteDayOfWeekId);
+            .HasForeignKey(so => so.SubstituteDayOfWeekId)
+            .IsRequired(false);;
 
         builder.HasOne(so => so.Group)
             .WithMany(g => g.ScheduleOverrides)
-            .HasForeignKey(so => so.GroupId);
+            .HasForeignKey(so => so.GroupId)
+            .IsRequired(false);
     }
 }
