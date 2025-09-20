@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.DayOfWeek;
 using ScheduleBotApi.Infrastructure.Contexts;
 
-namespace ScheduleApi.Application.Features.DayOfWeek.Queries;
+namespace ScheduleApi.Application.Features.ApplicationDayOfWeek.Queries;
 
 public static class GetDaysOfWeekList
 {

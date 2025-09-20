@@ -1,6 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ScheduleApi.Application.DTOs.Schedule;
 using ScheduleApi.Application.DTOs.User;
+using ScheduleApi.Application.Features.Schedule.Queries;
 using ScheduleApi.Application.Features.User.Commands;
 using ScheduleApi.Application.Features.User.Queries;
 
@@ -45,5 +47,20 @@ public class UserController : ControllerBase
         var userDto = await _mediator.Send(new GetUserByTelegramId.Query(telegramId));
         
         return Ok(userDto);
+    }
+    
+    [HttpGet("{userId:int}/schedule")]
+    [ProducesResponseType(typeof(List<ScheduleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetScheduleForDay(int userId, [FromQuery] DateTime? date)
+    {
+        var targetDate = date.HasValue 
+            ? DateOnly.FromDateTime(date.Value) 
+            : DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var query = new GetDailyScheduleForUser.Query(userId, targetDate);
+        var result = await _mediator.Send(query);
+        
+        return Ok(result);
     }
 }

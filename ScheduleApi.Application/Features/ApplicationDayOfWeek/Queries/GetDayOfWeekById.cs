@@ -5,7 +5,7 @@ using ScheduleApi.Application.DTOs.DayOfWeek;
 using ScheduleApi.Core.Exceptions;
 using ScheduleBotApi.Infrastructure.Contexts;
 
-namespace ScheduleApi.Application.Features.DayOfWeek.Queries;
+namespace ScheduleApi.Application.Features.ApplicationDayOfWeek.Queries;
 
 public static class GetDayOfWeekById
 {

@@ -1,10 +1,9 @@
 using AutoMapper;
 using MediatR;
 using ScheduleApi.Application.DTOs.DayOfWeek;
-using ScheduleApi.Core.Entities;
 using ScheduleBotApi.Infrastructure.Contexts;
 
-namespace ScheduleApi.Application.Features.DayOfWeek.Commands;
+namespace ScheduleApi.Application.Features.ApplicationDayOfWeek.Commands;
 
 public static class CreateDayOfWeek
 {
@@ -23,7 +22,7 @@ public static class CreateDayOfWeek
 
         public async Task<int> Handle(Command request, CancellationToken cancellationToken)
         {
-            var dayOfWeekEntity = _mapper.Map<ApplicationDayOfWeek>(request.Model);
+            var dayOfWeekEntity = _mapper.Map<Core.Entities.ApplicationDayOfWeek>(request.Model);
 
             await _ctx.ApplicationDaysOfWeek.AddAsync(dayOfWeekEntity, cancellationToken);
             await _ctx.SaveChangesAsync(cancellationToken);

@@ -1,8 +1,8 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using ScheduleApi.Application.DTOs.DayOfWeek;
-using ScheduleApi.Application.Features.DayOfWeek.Commands;
-using ScheduleApi.Application.Features.DayOfWeek.Queries;
+using ScheduleApi.Application.Features.ApplicationDayOfWeek.Commands;
+using ScheduleApi.Application.Features.ApplicationDayOfWeek.Queries;
 
 namespace ScheduleApi.Controllers;
 
