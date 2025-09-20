@@ -26,7 +26,7 @@ builder.Services.AddSwaggerGen(options =>
 {
     options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
     {
-        Description = "API Key authentication. Example: \"X-Api-Key: {token}\"",
+        Description = "API Key authentication",
         Name = "X-Api-Key",
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
