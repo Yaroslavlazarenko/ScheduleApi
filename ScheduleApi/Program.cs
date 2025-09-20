@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application;
 using ScheduleApi.ExceptionHandlers;
+using ScheduleApi.Middleware;
 using ScheduleBotApi.Infrastructure.Contexts;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -32,6 +33,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseApiKeyAuthentication();
 
 app.UseAuthorization();
 
