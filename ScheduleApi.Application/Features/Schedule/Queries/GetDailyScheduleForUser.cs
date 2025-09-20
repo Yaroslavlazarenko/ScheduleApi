@@ -5,6 +5,7 @@ using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Schedule;
+using ScheduleApi.Application.DTOs.ScheduleOverride;
 using ScheduleApi.Core.Exceptions;
 using ScheduleBotApi.Infrastructure.Contexts;
 
@@ -12,7 +13,7 @@ namespace ScheduleApi.Application.Features.Schedule.Queries;
 
 public static class GetDailyScheduleForUser
 {
-    public record Query(int UserId, DateOnly TargetDate) : IRequest<List<ScheduleDto>>;
+    public record Query(int UserId, DateTime? TargetDateTime) : IRequest<List<ScheduleDto>>;
 
     private class Handler : IRequestHandler<Query, List<ScheduleDto>>
     {
@@ -29,68 +30,69 @@ public static class GetDailyScheduleForUser
         {
             var user = await _ctx.Users
                 .AsNoTracking()
+                .Include(u => u.Region)
                 .FirstOrDefaultAsync(u => u.Id == request.UserId, cancellationToken);
             if (user is null)
                 throw new NotFoundException("User not found");
 
-            var targetDateTime = request.TargetDate.ToDateTime(TimeOnly.MinValue);
+            var userLocalTime = GetUserLocalTime(request.TargetDateTime, user.Region.Number);
+            var targetDate = DateOnly.FromDateTime(userLocalTime.DateTime);
             
+            var targetDateTimeForQuery = new DateTime(targetDate.Year, targetDate.Month, targetDate.Day, 0, 0, 0, DateTimeKind.Utc);
+
             var semester = await _ctx.Semesters
                 .AsNoTracking()
-                .FirstOrDefaultAsync(s => 
-                    s.StartDate <= targetDateTime 
-                    && s.EndDate >= targetDateTime, cancellationToken);
+                .FirstOrDefaultAsync(s => s.StartDate <= targetDateTimeForQuery && s.EndDate >= targetDateTimeForQuery, cancellationToken);
             
             if (semester is null)
                 return new List<ScheduleDto>();
 
-            var semesterStartDate = DateOnly.FromDateTime(semester.StartDate);
-
-            var overrideDate = request.TargetDate.ToDateTime(TimeOnly.MinValue);
+            var semesterStartDate = DateOnly.FromDateTime(semester.StartDate.ToUniversalTime());
+            
             var scheduleOverride = await _ctx.ScheduleOverrides
                 .AsNoTracking()
-                .FirstOrDefaultAsync(so => so.OverrideDate == overrideDate && (so.GroupId == user.GroupId || so.GroupId == null), cancellationToken);
+                .Include(so => so.SubstituteDayOfWeek)
+                .FirstOrDefaultAsync(so => so.OverrideDate == targetDateTimeForQuery && (so.GroupId == user.GroupId || so.GroupId == null), cancellationToken);
+
+            var weekNumber = CalculateWeekNumber(semesterStartDate, targetDate);
+            var isEvenWeek = (weekNumber % 2) == 0;
+            
+            List<ScheduleDto> scheduleDtos;
 
             if (scheduleOverride != null)
             {
                 if (scheduleOverride.SubstituteDayOfWeekId.HasValue)
                 {
-                    var weekNumber = CalculateWeekNumber(semesterStartDate, request.TargetDate);
-                    var isEvenWeek = (weekNumber % 2) == 0;
+                    scheduleDtos = await GetScheduleEntriesAsync(user.GroupId, scheduleOverride.SubstituteDayOfWeekId.Value, semester.Id, isEvenWeek, cancellationToken);
+
+                    var overrideInfo = new ScheduleOverrideInfoDto
+                    {
+                        SubstitutedDayName = scheduleOverride.SubstituteDayOfWeek!.Name,
+                        Description = scheduleOverride.Description ?? "Перенос занять"
+                    };
                     
-                    return await GetScheduleEntriesAsync(user.GroupId, scheduleOverride.SubstituteDayOfWeekId.Value, semester.Id, isEvenWeek, cancellationToken);
+                    foreach (var dto in scheduleDtos)
+                    {
+                        dto.OverrideInfo = overrideInfo;
+                    }
                 }
-                
-                return new List<ScheduleDto>();
+                else
+                {
+                    scheduleDtos = new List<ScheduleDto>();
+                }
             }
-
-            var targetDayOfWeek = request.TargetDate.DayOfWeek;
-            
-            if (targetDayOfWeek == DayOfWeek.Saturday)
+            else
             {
-                var weekNumber = CalculateWeekNumber(semesterStartDate, request.TargetDate);
-
-                var weekBlock = (weekNumber - 1) / 5;
-
-                var isEvenWeekForSubstitute = ((weekBlock + 1) % 2) == 0;
-                
-                var substituteDayId = ((weekNumber - 1) % 5) + 1;
-
-                return await GetScheduleEntriesAsync(user.GroupId, substituteDayId, semester.Id, isEvenWeekForSubstitute, cancellationToken);
+                var dayOfWeekId = (int)targetDate.DayOfWeek == 0 ? 7 : (int)targetDate.DayOfWeek;
+                scheduleDtos = await GetScheduleEntriesAsync(user.GroupId, dayOfWeekId, semester.Id, isEvenWeek, cancellationToken);
             }
-            
-            var dayOfWeekId = (int)targetDayOfWeek;
-            if (dayOfWeekId == 0) dayOfWeekId = 7;
 
-            var finalWeekNumber = CalculateWeekNumber(semesterStartDate, request.TargetDate);
-            var finalIsEvenWeek = (finalWeekNumber % 2) == 0;
-            
-            return await GetScheduleEntriesAsync(user.GroupId, dayOfWeekId, semester.Id, finalIsEvenWeek, cancellationToken);
+            return scheduleDtos;
         }
-
+        
         private async Task<List<ScheduleDto>> GetScheduleEntriesAsync(int groupId, int dayOfWeekId, int semesterId, bool isEvenWeek, CancellationToken cancellationToken)
         {
-            return await _ctx.Schedules
+             return await _ctx.Schedules
                 .AsNoTracking()
                 .Where(s =>
                     s.GroupId == groupId &&
@@ -101,17 +103,21 @@ public static class GetDailyScheduleForUser
                 .ProjectTo<ScheduleDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
         }
-
+        
+        private DateTimeOffset GetUserLocalTime(DateTime? targetUtc, int offsetHours)
+        {
+            var timeUtc = targetUtc ?? DateTime.UtcNow;
+            var userOffset = TimeSpan.FromHours(offsetHours);
+            return new DateTimeOffset(timeUtc).ToOffset(userOffset);
+        }
+        
         private int CalculateWeekNumber(DateOnly semesterStart, DateOnly targetDate)
         {
-            var startDayOfWeek = (int)semesterStart.DayOfWeek;
+             var startDayOfWeek = (int)semesterStart.DayOfWeek;
             var daysToSubtract = (startDayOfWeek == 0) ? 6 : startDayOfWeek - 1;
             var mondayOfFirstWeek = semesterStart.AddDays(-daysToSubtract);
-            
             var totalDays = targetDate.DayNumber - mondayOfFirstWeek.DayNumber;
-            
             if (totalDays < 0) return 1;
-
             return (totalDays / 7) + 1;
         }
     }
