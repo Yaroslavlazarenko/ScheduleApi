@@ -14,4 +14,8 @@
       <ProjectReference Include="..\ScheduleApi.Infrastructure\ScheduleApi.Infrastructure.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Features\TeacherInfo\Queries\" />
+    </ItemGroup>
+
 </Project>
