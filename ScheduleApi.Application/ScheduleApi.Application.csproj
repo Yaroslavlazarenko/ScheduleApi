@@ -7,15 +7,15 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="Feautures\" />
-    </ItemGroup>
-
-    <ItemGroup>
-      <PackageReference Include="MediatR" Version="13.0.0" />
+      <PackageReference Include="MediatR" Version="11.1.0" />
     </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\ScheduleApi.Infrastructure\ScheduleApi.Infrastructure.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Features\TeacherInfo\Queries\" />
     </ItemGroup>
 
 </Project>

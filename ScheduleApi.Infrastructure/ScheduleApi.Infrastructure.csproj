@@ -8,8 +8,7 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <Folder Include="DTOs\" />
-      <Folder Include="EntitiConfigurations\" />
+      <Folder Include="Migrations\" />
     </ItemGroup>
 
     <ItemGroup>
