@@ -63,4 +63,24 @@ public class UserController : ControllerBase
         
         return Ok(result);
     }
+    
+    [HttpPut("{userId:int}/group")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeUserGroup(int userId, [FromBody] ChangeUserGroupDto changeGroupDto)
+    {
+        await _mediator.Send(new ChangeUserGroup.Command(userId, changeGroupDto));
+        return NoContent();
+    }
+
+    [HttpPut("{userId:int}/region")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ChangeUserRegion(int userId, [FromBody] ChangeUserRegionDto changeRegionDto)
+    {
+        await _mediator.Send(new ChangeUserRegion.Command(userId, changeRegionDto));
+        return NoContent();
+    }
 }
