@@ -9,6 +9,7 @@ public class SubjectMappingProfile : Profile
     public SubjectMappingProfile()
     {
         CreateMap<CreateSubjectDto, Subject>();
+        CreateMap<Subject, SubjectVariantDto>();
         
         CreateMap<Subject, SubjectDto>()
             .ForMember(dest => dest.Infos,
