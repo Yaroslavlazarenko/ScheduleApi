@@ -1,6 +1,3 @@
-using ScheduleApi.Application.DTOs.SubjectInfo;
-using ScheduleApi.Application.DTOs.Teacher;
-
 namespace ScheduleApi.Application.DTOs.Subject;
 
 public class GroupedSubjectDetailsDto

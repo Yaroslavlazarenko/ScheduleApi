@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using ScheduleApi.Application;
 using ScheduleApi.ExceptionHandlers;
+using ScheduleApi.Extensions;
 using ScheduleApi.Middleware;
 using ScheduleBotApi.Infrastructure.Contexts;
 
@@ -19,6 +20,7 @@ builder.Services.AddGlobalExceptionHandlers();
 builder.Services.AddAutoMapper(typeof(IApplicationAssemblyMarker).Assembly);
 builder.Services.AddMediatR(typeof(IApplicationAssemblyMarker).Assembly);
 builder.Services.AddControllers();
+builder.Services.AddHealthChecks();
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
@@ -54,6 +56,8 @@ builder.Services.AddSwaggerGen(options =>
 
 var app = builder.Build();
 
+app.ApplyMigrations();
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
@@ -61,7 +65,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
+app.MapGet("/health", () => Results.Ok("Healthy"));
 
 app.UseApiKeyAuthentication();
 
