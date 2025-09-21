@@ -26,7 +26,7 @@ public static class GetRegionsList
         {
             var list = await _ctx.Regions
                 .AsNoTracking()
-                .OrderBy(r => r.Number)
+                .OrderBy(r => r.Name)
                 .ProjectTo<RegionDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
 

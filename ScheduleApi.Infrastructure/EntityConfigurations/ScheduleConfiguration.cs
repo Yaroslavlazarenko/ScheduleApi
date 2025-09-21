@@ -13,8 +13,9 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id).ValueGeneratedOnAdd();
 
-        builder.HasIndex(s => new { s.ApplicationDayOfWeekId, s.PairId, s.GroupId }).IsUnique();
-
+        builder.HasIndex(s => new { s.ApplicationDayOfWeekId, s.PairId, s.GroupId, s.IsEvenWeek })
+            .IsUnique();
+        
         builder.HasOne(s => s.ApplicationDayOfWeek)
             .WithMany(d => d.Schedules)
             .HasForeignKey(s => s.ApplicationDayOfWeekId);

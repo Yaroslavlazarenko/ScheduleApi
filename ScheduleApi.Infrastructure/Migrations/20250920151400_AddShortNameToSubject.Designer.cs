@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ScheduleBotApi.Infrastructure.Contexts;
@@ -11,9 +12,11 @@ using ScheduleBotApi.Infrastructure.Contexts;
 namespace ScheduleBotApi.Infrastructure.Migrations
 {
     [DbContext(typeof(ScheduleContext))]
-    partial class ScheduleContextModelSnapshot : ModelSnapshot
+    [Migration("20250920151400_AddShortNameToSubject")]
+    partial class AddShortNameToSubject
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -29,10 +32,6 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                         .HasColumnType("integer");
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Abbreviation")
-                        .IsRequired()
-                        .HasColumnType("text");
 
                     b.Property<string>("Name")
                         .IsRequired()
@@ -144,18 +143,10 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("TimeZoneId")
-                        .IsRequired()
-                        .HasColumnType("text");
+                    b.Property<int>("Number")
+                        .HasColumnType("integer");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("TimeZoneId")
-                        .IsUnique();
 
                     b.ToTable("Regions");
                 });
@@ -201,7 +192,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.HasIndex("ApplicationDayOfWeekId", "PairId", "GroupId", "IsEvenWeek")
+                    b.HasIndex("ApplicationDayOfWeekId", "PairId", "GroupId")
                         .IsUnique();
 
                     b.ToTable("Schedule", (string)null);

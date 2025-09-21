@@ -1,3 +1,5 @@
+using ScheduleApi.Application.DTOs.ScheduleOverride;
+
 namespace ScheduleApi.Application.DTOs.Schedule;
 
 public class ScheduleDto
@@ -16,4 +18,5 @@ public class ScheduleDto
     
     public bool IsEvenWeek { get; set; }
     public int SemesterId { get; set; }
+    public ScheduleOverrideInfoDto? OverrideInfo { get; set; }
 }

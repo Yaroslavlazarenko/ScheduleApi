@@ -50,17 +50,12 @@ public class UserController : ControllerBase
     }
     
     [HttpGet("{userId:int}/schedule")]
-    [ProducesResponseType(typeof(List<ScheduleDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<DailyScheduleDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<IActionResult> GetScheduleForDay(int userId, [FromQuery] DateTime? date)
     {
-        var targetDate = date.HasValue 
-            ? DateOnly.FromDateTime(date.Value) 
-            : DateOnly.FromDateTime(DateTime.UtcNow);
-
-        var query = new GetDailyScheduleForUser.Query(userId, targetDate);
-        var result = await _mediator.Send(query);
-        
+        var result = await _mediator.Send(new GetDailyScheduleForUser.Query(userId, date));
+    
         return Ok(result);
     }
     

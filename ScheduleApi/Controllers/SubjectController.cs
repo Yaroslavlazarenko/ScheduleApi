@@ -29,7 +29,7 @@ public class SubjectController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(List<SubjectDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<GroupedSubjectDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSubjects()
     {
         var result = await _mediator.Send(new GetSubjectsList.Query());
@@ -42,6 +42,24 @@ public class SubjectController : ControllerBase
     public async Task<IActionResult> GetSubjectById(int id)
     {
         var result = await _mediator.Send(new GetSubjectById.Query(id));
+        return Ok(result);
+    }
+    
+    [HttpGet("{id:int}/info")]
+    [ProducesResponseType(typeof(SubjectDetailsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSubjectInfo(int id)
+    {
+        var result = await _mediator.Send(new GetSubjectDetails.Query(id));
+        return Ok(result);
+    }
+    
+    [HttpGet("{abbreviation}/info")]
+    [ProducesResponseType(typeof(GroupedSubjectDetailsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSubjectInfo(string abbreviation)
+    {
+        var result = await _mediator.Send(new GetGroupedSubjectDetails.Query(abbreviation));
         return Ok(result);
     }
 }
