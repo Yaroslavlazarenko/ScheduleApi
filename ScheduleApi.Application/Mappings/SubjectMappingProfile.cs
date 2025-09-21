@@ -13,5 +13,11 @@ public class SubjectMappingProfile : Profile
         CreateMap<Subject, SubjectDto>()
             .ForMember(dest => dest.Infos,
                 opt => opt.MapFrom(src => src.SubjectInfos));
+        
+        CreateMap<Subject, SubjectDetailsDto>()
+            .ForMember(dest => dest.Infos,
+                opt => opt.MapFrom(src => src.SubjectInfos))
+            .ForMember(dest => dest.Teachers,
+                opt => opt.MapFrom(src => src.TeacherSubjects.Select(ts => ts.Teacher)));
     }
 }

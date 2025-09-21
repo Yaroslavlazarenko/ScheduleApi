@@ -44,4 +44,13 @@ public class SubjectController : ControllerBase
         var result = await _mediator.Send(new GetSubjectById.Query(id));
         return Ok(result);
     }
+    
+    [HttpGet("{id:int}/info")]
+    [ProducesResponseType(typeof(SubjectDetailsDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetSubjectInfo(int id)
+    {
+        var result = await _mediator.Send(new GetSubjectDetails.Query(id));
+        return Ok(result);
+    }
 }
