@@ -1,5 +1,6 @@
 using AutoMapper;
 using ScheduleApi.Application.DTOs.GroupSubject;
+using ScheduleApi.Core.Entities;
 
 namespace ScheduleApi.Application.Mappings;
 
@@ -7,7 +8,7 @@ public class GroupSubjectMappingProfile : Profile
 {
     public GroupSubjectMappingProfile()
     {
-        CreateMap<Core.Entities.GroupSubject, GroupSubjectDto>()
+        CreateMap<GroupSubject, GroupSubjectDto>()
             .ForMember(dest => dest.SubjectName,
                 opt => opt.MapFrom(src => src.Subject.Name))
             .ForMember(dest => dest.TeacherFullName,

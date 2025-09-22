@@ -8,6 +8,6 @@ public class SubjectVariantDto
 {
     public int Id { get; set; } 
     public SubjectTypeDto SubjectType { get; set; }
-    public List<SubjectTeacherDto> Teachers { get; set; } = new(); 
+    public List<TeacherDto> Teachers { get; set; } = new(); 
     public List<SubjectInfoDto> Infos { get; set; } = new();
 }
