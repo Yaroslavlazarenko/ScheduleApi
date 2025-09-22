@@ -14,5 +14,5 @@ public class SubjectDetailsDto
     public SubjectTypeDto SubjectType { get; set; } 
     public List<SubjectInfoDto> Infos { get; set; }
     
-    public List<SubjectTeacherDto> Teachers { get; set; } = new();
+    public List<TeacherDto> Teachers { get; set; } = new();
 }

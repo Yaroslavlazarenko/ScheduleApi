@@ -15,9 +15,5 @@ public class TeacherMappingProfile : Profile
                 opt => opt.MapFrom(src => $"{src.LastName} {src.FirstName} {src.MiddleName}".Trim()))
             .ForMember(dest => dest.Infos,
                 opt => opt.MapFrom(src => src.TeacherInfos));
-        
-        CreateMap<Teacher, SubjectTeacherDto>()
-            .ForMember(dest => dest.FullName,
-                opt => opt.MapFrom(src => $"{src.LastName} {src.FirstName} {src.MiddleName}".Trim()));
     }
 }

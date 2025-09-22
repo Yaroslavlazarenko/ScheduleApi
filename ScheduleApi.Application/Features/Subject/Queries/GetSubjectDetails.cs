@@ -30,6 +30,8 @@ public static class GetSubjectDetails
                 .ThenInclude(si => si.InfoType)
                 .Include(s => s.TeacherSubjects)
                 .ThenInclude(ts => ts.Teacher)
+                .ThenInclude(t => t.TeacherInfos)
+                .ThenInclude(ti => ti.InfoType)
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
 

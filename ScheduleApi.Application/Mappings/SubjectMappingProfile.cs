@@ -10,6 +10,7 @@ public class SubjectMappingProfile : Profile
     {
         CreateMap<CreateSubjectDto, Subject>();
         CreateMap<Subject, SubjectVariantDto>();
+        CreateMap<Subject, GroupedSubjectDto>();
         
         CreateMap<Subject, SubjectDto>()
             .ForMember(dest => dest.Infos,
@@ -19,6 +20,9 @@ public class SubjectMappingProfile : Profile
             .ForMember(dest => dest.Infos,
                 opt => opt.MapFrom(src => src.SubjectInfos))
             .ForMember(dest => dest.Teachers,
-                opt => opt.MapFrom(src => src.TeacherSubjects.Select(ts => ts.Teacher)));
+                opt => opt.MapFrom(src => src.TeacherSubjects.Select(ts => ts.Teacher)))
+            .ForMember(
+                dest => dest.Infos,
+                opt => opt.MapFrom(src => src.SubjectInfos));
     }
 }

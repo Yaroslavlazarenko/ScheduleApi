@@ -31,7 +31,10 @@ public static class GetGroupedSubjectDetails
                 .Where(s => s.Abbreviation == request.Abbreviation)
                 .Include(s => s.SubjectType)
                 .Include(s => s.SubjectInfos).ThenInclude(si => si.InfoType)
-                .Include(s => s.TeacherSubjects).ThenInclude(ts => ts.Teacher)
+                .Include(s => s.TeacherSubjects)
+                .ThenInclude(ts => ts.Teacher)
+                .ThenInclude(t => t.TeacherInfos)
+                .ThenInclude(ti => ti.InfoType)
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
 
@@ -53,7 +56,7 @@ public static class GetGroupedSubjectDetails
                     Id = s.Id,
                     SubjectType = _mapper.Map<SubjectTypeDto>(s.SubjectType),
                     Teachers = s.TeacherSubjects
-                                 .Select(ts => _mapper.Map<SubjectTeacherDto>(ts.Teacher))
+                                 .Select(ts => _mapper.Map<TeacherDto>(ts.Teacher))
                                  .ToList(),
                     Infos = _mapper.Map<List<SubjectInfoDto>>(s.SubjectInfos)
                 }).ToList()
