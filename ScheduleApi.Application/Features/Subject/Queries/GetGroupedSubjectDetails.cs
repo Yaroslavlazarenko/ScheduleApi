@@ -12,7 +12,7 @@ namespace ScheduleApi.Application.Features.Subject.Queries;
 
 public static class GetGroupedSubjectDetails
 {
-    public record Query(string Abbreviation) : IRequest<GroupedSubjectDetailsDto>;
+    public record Query(string Abbreviation, int? GroupId) : IRequest<GroupedSubjectDetailsDto>;
 
     private class Handler : IRequestHandler<Query, GroupedSubjectDetailsDto>
     {
@@ -31,18 +31,26 @@ public static class GetGroupedSubjectDetails
                 .Where(s => s.Abbreviation == request.Abbreviation)
                 .Include(s => s.SubjectType)
                 .Include(s => s.SubjectInfos).ThenInclude(si => si.InfoType)
-                .Include(s => s.TeacherSubjects)
+                .Include(s => s.TeacherSubjects
+                    .Where(ts => !request.GroupId.HasValue ||
+                                 ts.GroupSubjects.Any(gs => gs.GroupId == request.GroupId.Value)))
                 .ThenInclude(ts => ts.Teacher)
                 .ThenInclude(t => t.TeacherInfos)
                 .ThenInclude(ti => ti.InfoType)
+
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
-
+            
             if (!subjects.Any())
             {
                 throw new NotFoundException($"Subject with abbreviation '{request.Abbreviation}' not found");
             }
 
+            if (request.GroupId.HasValue && !subjects.Any(s => s.TeacherSubjects.Any()))
+            {
+                throw new NotFoundException($"Subject with abbreviation '{request.Abbreviation}' has no teachers for group with id {request.GroupId.Value}");
+            }
+            
             var firstSubject = subjects.First();
 
             var resultDto = new GroupedSubjectDetailsDto
@@ -50,7 +58,6 @@ public static class GetGroupedSubjectDetails
                 Name = firstSubject.Name,
                 ShortName = firstSubject.ShortName,
                 Abbreviation = firstSubject.Abbreviation,
-                
                 Variants = subjects.Select(s => new SubjectVariantDto
                 {
                     Id = s.Id,
