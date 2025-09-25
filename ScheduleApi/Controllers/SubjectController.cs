@@ -48,18 +48,20 @@ public class SubjectController : ControllerBase
     [HttpGet("{id:int}/info")]
     [ProducesResponseType(typeof(SubjectDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetSubjectInfo(int id)
+    public async Task<IActionResult> GetSubjectInfo(int id, [FromQuery] int? groupId)
     {
-        var result = await _mediator.Send(new GetSubjectDetails.Query(id));
+        var result = await _mediator.Send(new GetSubjectDetails.Query(id, groupId));
+        
         return Ok(result);
     }
     
     [HttpGet("{abbreviation}/info")]
     [ProducesResponseType(typeof(GroupedSubjectDetailsDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetSubjectInfo(string abbreviation)
+    public async Task<IActionResult> GetGroupedSubjectDetails(string abbreviation, [FromQuery] int? groupId)
     {
-        var result = await _mediator.Send(new GetGroupedSubjectDetails.Query(abbreviation));
+        var result = await _mediator.Send(new GetGroupedSubjectDetails.Query(abbreviation, groupId));
+        
         return Ok(result);
     }
 }
