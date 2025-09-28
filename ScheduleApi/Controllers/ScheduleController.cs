@@ -78,4 +78,18 @@ public class ScheduleController : ControllerBase
         await _mediator.Send(new DeleteSchedule.Command(id));
         return NoContent();
     }
+    
+    [HttpGet("group/week")]
+    [ProducesResponseType(typeof(WeeklyScheduleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetGroupWeeklySchedule(
+        [FromQuery] int groupId,
+        [FromQuery] string timeZoneId,
+        [FromQuery] DateTime? date)
+    {
+        var query = new GetGroupWeeklySchedule.Query(groupId, timeZoneId, date);
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
 }
