@@ -12,7 +12,7 @@ namespace ScheduleApi.Application.Features.Subject.Queries;
 
 public static class GetGroupedSubjectDetails
 {
-    public record Query(string Abbreviation, int? GroupId) : IRequest<GroupedSubjectDetailsDto>;
+    public record Query(int SubjectNameId, int? GroupId) : IRequest<GroupedSubjectDetailsDto>;
 
     private class Handler : IRequestHandler<Query, GroupedSubjectDetailsDto>
     {
@@ -28,7 +28,7 @@ public static class GetGroupedSubjectDetails
         public async Task<GroupedSubjectDetailsDto> Handle(Query request, CancellationToken cancellationToken)
         {
             var subjects = await _ctx.Subjects
-                .Where(s => s.SubjectName.Abbreviation == request.Abbreviation)
+                .Where(s => s.SubjectNameId == request.SubjectNameId)
                 .Include(s => s.SubjectName)
                 .Include(s => s.SubjectType)
                 .Include(s => s.SubjectInfos).ThenInclude(si => si.InfoType)
@@ -38,18 +38,17 @@ public static class GetGroupedSubjectDetails
                 .ThenInclude(ts => ts.Teacher)
                 .ThenInclude(t => t.TeacherInfos)
                 .ThenInclude(ti => ti.InfoType)
-
                 .AsNoTracking()
                 .ToListAsync(cancellationToken);
             
             if (!subjects.Any())
             {
-                throw new NotFoundException($"Subject with abbreviation '{request.Abbreviation}' not found");
+                throw new NotFoundException($"Subject with SubjectNameId '{request.SubjectNameId}' not found");
             }
 
             if (request.GroupId.HasValue && !subjects.Any(s => s.TeacherSubjects.Any()))
             {
-                throw new NotFoundException($"Subject with abbreviation '{request.Abbreviation}' has no teachers for group with id {request.GroupId.Value}");
+                throw new NotFoundException($"Subject with abbreviation '{request.SubjectNameId}' has no teachers for group with id {request.GroupId.Value}");
             }
             
             var firstSubject = subjects.First();
