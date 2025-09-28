@@ -21,10 +21,16 @@ public class ScheduleMappingProfile : Profile
                 opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectName.FullName));
             
         CreateMap<Schedule, LessonDto>()
+            .ForMember(dest => dest.SubjectName,
+                opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectName.FullName))
+            .ForMember(dest => dest.SubjectShortName,
+                opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectName.ShortName))
+            .ForMember(dest => dest.SubjectAbbreviation,
+                opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectName.Abbreviation))
             .ForMember(dest => dest.SubjectTypeAbbreviation, 
                 opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectType.Abbreviation))
             .ForMember(dest => dest.TeacherFullName, 
-                opt => opt.MapFrom(src => $"{src.GroupSubject.TeacherSubject.Teacher.LastName} {src.GroupSubject.TeacherSubject.Teacher.FirstName.Substring(0, 1)}. {src.GroupSubject.TeacherSubject.Teacher.MiddleName.Substring(0, 1)}."))
+                opt => opt.MapFrom(src => $"{src.GroupSubject.TeacherSubject.Teacher.LastName} {src.GroupSubject.TeacherSubject.Teacher.FirstName} {src.GroupSubject.TeacherSubject.Teacher.MiddleName}"))
             .ForMember(dest => dest.LessonUrl, 
                 opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.LessonUrl));
     }
