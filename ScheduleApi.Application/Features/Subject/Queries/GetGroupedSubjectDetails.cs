@@ -27,47 +27,65 @@ public static class GetGroupedSubjectDetails
 
         public async Task<GroupedSubjectDetailsDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var subjects = await _ctx.Subjects
-                .Where(s => s.SubjectNameId == request.SubjectNameId)
-                .Include(s => s.SubjectName)
+            var subjectName = await _ctx.SubjectNames
+                .AsNoTracking()
+                .FirstOrDefaultAsync(sn => sn.Id == request.SubjectNameId, cancellationToken);
+
+            if (subjectName == null)
+            {
+                throw new NotFoundException($"SubjectName with ID '{request.SubjectNameId}' not found");
+            }
+            
+            var subjectVariants = await _ctx.Subjects
+                .AsNoTracking()
                 .Include(s => s.SubjectType)
                 .Include(s => s.SubjectInfos).ThenInclude(si => si.InfoType)
-                .Include(s => s.TeacherSubjects
-                    .Where(ts => !request.GroupId.HasValue ||
-                                 ts.GroupSubjects.Any(gs => gs.GroupId == request.GroupId.Value)))
-                .ThenInclude(ts => ts.Teacher)
+                .Where(s => s.SubjectNameId == request.SubjectNameId)
+                .ToListAsync(cancellationToken);
+
+            if (!subjectVariants.Any())
+            {
+                throw new NotFoundException($"No Subject variants found for SubjectName with ID '{request.SubjectNameId}'");
+            }
+            
+            var variantIds = subjectVariants.Select(v => v.Id).ToList();
+            
+            var teacherQuery = _ctx.TeacherSubjects
+                .AsNoTracking()
+                .Include(ts => ts.Teacher)
                 .ThenInclude(t => t.TeacherInfos)
                 .ThenInclude(ti => ti.InfoType)
-                .AsNoTracking()
-                .ToListAsync(cancellationToken);
+                .Where(ts => variantIds.Contains(ts.SubjectId));
             
-            if (!subjects.Any())
+            if (request.GroupId.HasValue)
             {
-                throw new NotFoundException($"Subject with SubjectNameId '{request.SubjectNameId}' not found");
-            }
-
-            if (request.GroupId.HasValue && !subjects.Any(s => s.TeacherSubjects.Any()))
-            {
-                throw new NotFoundException($"Subject with abbreviation '{request.SubjectNameId}' has no teachers for group with id {request.GroupId.Value}");
+                teacherQuery = teacherQuery.Where(ts => ts.GroupSubjects.Any(gs => gs.GroupId == request.GroupId.Value));
             }
             
-            var firstSubject = subjects.First();
-
+            var teachersByVariant = (await teacherQuery.ToListAsync(cancellationToken))
+                .GroupBy(ts => ts.SubjectId)
+                .ToDictionary(g => g.Key, g => g.Select(ts => ts.Teacher).ToList());
+            
             var resultDto = new GroupedSubjectDetailsDto
             {
-                Name = firstSubject.SubjectName.FullName,
-                ShortName = firstSubject.SubjectName.ShortName,
-                Abbreviation = firstSubject.SubjectName.Abbreviation,
-                Variants = subjects.Select(s => new SubjectVariantDto
+                Name = subjectName.FullName,
+                ShortName = subjectName.ShortName,
+                Abbreviation = subjectName.Abbreviation,
+                Variants = subjectVariants.Select(s => new SubjectVariantDto
                 {
                     Id = s.Id,
                     SubjectType = _mapper.Map<SubjectTypeDto>(s.SubjectType),
-                    Teachers = s.TeacherSubjects
-                        .Select(ts => _mapper.Map<TeacherDto>(ts.Teacher))
-                        .ToList(),
-                    Infos = _mapper.Map<List<SubjectInfoDto>>(s.SubjectInfos)
+                    Infos = _mapper.Map<List<SubjectInfoDto>>(s.SubjectInfos),
+                    Teachers = teachersByVariant.TryGetValue(s.Id, out var teachers)
+                        ? _mapper.Map<List<TeacherDto>>(teachers)
+                        : new List<TeacherDto>()
                 }).ToList()
             };
+            
+            if (request.GroupId.HasValue && !resultDto.Variants.Any(v => v.Teachers.Any()))
+            {
+                 throw new NotFoundException($"Subject '{subjectName.Abbreviation}' has no assigned teachers for the specified group.");
+            }
 
             return resultDto;
         }
