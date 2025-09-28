@@ -10,6 +10,19 @@ public class ScheduleMappingProfile : Profile
     {
         CreateMap<MutateScheduleDto, Schedule>();
 
+        CreateMap<Schedule, ScheduleDataDto>()
+            .ForMember(dest => dest.PairNumber, opt => opt.MapFrom(src => src.Pair.Number))
+            .ForMember(dest => dest.PairStartTime, opt => opt.MapFrom(src => src.Pair.StartTime))
+            .ForMember(dest => dest.PairEndTime, opt => opt.MapFrom(src => src.Pair.EndTime))
+            .ForMember(dest => dest.SubjectName, opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectName.FullName))
+            .ForMember(dest => dest.SubjectShortName, opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectName.ShortName))
+            .ForMember(dest => dest.SubjectAbbreviation, opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectName.Abbreviation))
+            .ForMember(dest => dest.SubjectTypeAbbreviation, opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.Subject.SubjectType.Abbreviation))
+            .ForMember(dest => dest.TeacherFullName, opt => opt.MapFrom(src => $"{src.GroupSubject.TeacherSubject.Teacher.LastName} {src.GroupSubject.TeacherSubject.Teacher.FirstName} {src.GroupSubject.TeacherSubject.Teacher.MiddleName}".Trim()))
+            .ForMember(dest => dest.LessonUrl, opt => opt.MapFrom(src => src.GroupSubject.TeacherSubject.LessonUrl));
+        
+        CreateMap<ScheduleDataDto, LessonDto>();
+        
         CreateMap<Schedule, ScheduleDto>()
             .ForMember(dest => dest.TeacherFullName,
                 opt => opt.MapFrom(src =>
