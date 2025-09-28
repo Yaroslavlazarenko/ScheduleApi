@@ -18,7 +18,8 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Abbreviation = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -71,8 +72,8 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     Number = table.Column<int>(type: "integer", nullable: false),
-                    StartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
-                    EndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: false)
+                    StartTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false),
+                    EndTime = table.Column<TimeOnly>(type: "time without time zone", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -85,7 +86,8 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Number = table.Column<int>(type: "integer", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    TimeZoneId = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -120,12 +122,28 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "SubjectNames",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    FullName = table.Column<string>(type: "text", nullable: false),
+                    ShortName = table.Column<string>(type: "text", nullable: false),
+                    Abbreviation = table.Column<string>(type: "text", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_SubjectNames", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "SubjectTypes",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false)
+                    Name = table.Column<string>(type: "text", nullable: false),
+                    Abbreviation = table.Column<string>(type: "text", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -187,6 +205,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     TelegramId = table.Column<long>(type: "bigint", nullable: true),
+                    Username = table.Column<string>(type: "text", nullable: true),
                     GroupId = table.Column<int>(type: "integer", nullable: false),
                     RegionId = table.Column<int>(type: "integer", nullable: false),
                     IsAdmin = table.Column<bool>(type: "boolean", nullable: false)
@@ -214,12 +233,18 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    SubjectTypeId = table.Column<int>(type: "integer", nullable: false)
+                    SubjectTypeId = table.Column<int>(type: "integer", nullable: false),
+                    SubjectNameId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Subjects", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Subjects_SubjectNames_SubjectNameId",
+                        column: x => x.SubjectNameId,
+                        principalTable: "SubjectNames",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_Subjects_SubjectTypes_SubjectTypeId",
                         column: x => x.SubjectTypeId,
@@ -254,67 +279,13 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Schedule",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    ApplicationDayOfWeekId = table.Column<int>(type: "integer", nullable: false),
-                    PairId = table.Column<int>(type: "integer", nullable: false),
-                    GroupId = table.Column<int>(type: "integer", nullable: false),
-                    TeacherId = table.Column<int>(type: "integer", nullable: false),
-                    SubjectId = table.Column<int>(type: "integer", nullable: false),
-                    IsEvenWeek = table.Column<bool>(type: "boolean", nullable: false),
-                    SemesterId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Schedule", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Schedule_ApplicationDaysOfWeek_ApplicationDayOfWeekId",
-                        column: x => x.ApplicationDayOfWeekId,
-                        principalTable: "ApplicationDaysOfWeek",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Schedule_Groups_GroupId",
-                        column: x => x.GroupId,
-                        principalTable: "Groups",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Schedule_Pairs_PairId",
-                        column: x => x.PairId,
-                        principalTable: "Pairs",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Schedule_Semesters_SemesterId",
-                        column: x => x.SemesterId,
-                        principalTable: "Semesters",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Schedule_Subjects_SubjectId",
-                        column: x => x.SubjectId,
-                        principalTable: "Subjects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Schedule_Teachers_TeacherId",
-                        column: x => x.TeacherId,
-                        principalTable: "Teachers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "SubjectInfos",
                 columns: table => new
                 {
                     SubjectId = table.Column<int>(type: "integer", nullable: false),
                     InfoTypeId = table.Column<int>(type: "integer", nullable: false),
-                    Value = table.Column<string>(type: "text", nullable: false)
+                    Value = table.Column<string>(type: "text", nullable: false),
+                    Description = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -337,17 +308,25 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 name: "TeacherSubjects",
                 columns: table => new
                 {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     TeacherId = table.Column<int>(type: "integer", nullable: false),
                     SubjectId = table.Column<int>(type: "integer", nullable: false),
                     LessonUrl = table.Column<string>(type: "text", nullable: true),
-                    SocialMediaTypesId = table.Column<int>(type: "integer", nullable: true)
+                    SocialMediaTypeId = table.Column<int>(type: "integer", nullable: true),
+                    SocialMediaTypeId1 = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_TeacherSubjects", x => new { x.TeacherId, x.SubjectId });
+                    table.PrimaryKey("PK_TeacherSubjects", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_TeacherSubjects_SocialMediaTypes_SocialMediaTypesId",
-                        column: x => x.SocialMediaTypesId,
+                        name: "FK_TeacherSubjects_SocialMediaTypes_SocialMediaTypeId",
+                        column: x => x.SocialMediaTypeId,
+                        principalTable: "SocialMediaTypes",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_TeacherSubjects_SocialMediaTypes_SocialMediaTypeId1",
+                        column: x => x.SocialMediaTypeId1,
                         principalTable: "SocialMediaTypes",
                         principalColumn: "Id");
                     table.ForeignKey(
@@ -368,13 +347,17 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 name: "GroupSubjects",
                 columns: table => new
                 {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
                     GroupId = table.Column<int>(type: "integer", nullable: false),
-                    TeacherId = table.Column<int>(type: "integer", nullable: false),
-                    SubjectId = table.Column<int>(type: "integer", nullable: false)
+                    TeacherSubjectId = table.Column<int>(type: "integer", nullable: false),
+                    SemesterId = table.Column<int>(type: "integer", nullable: false),
+                    SubjectId = table.Column<int>(type: "integer", nullable: true),
+                    TeacherId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_GroupSubjects", x => new { x.GroupId, x.TeacherId, x.SubjectId });
+                    table.PrimaryKey("PK_GroupSubjects", x => x.Id);
                     table.ForeignKey(
                         name: "FK_GroupSubjects_Groups_GroupId",
                         column: x => x.GroupId,
@@ -382,24 +365,97 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
+                        name: "FK_GroupSubjects_Semesters_SemesterId",
+                        column: x => x.SemesterId,
+                        principalTable: "Semesters",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
                         name: "FK_GroupSubjects_Subjects_SubjectId",
                         column: x => x.SubjectId,
                         principalTable: "Subjects",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                     table.ForeignKey(
-                        name: "FK_GroupSubjects_TeacherSubjects_TeacherId_SubjectId",
-                        columns: x => new { x.TeacherId, x.SubjectId },
+                        name: "FK_GroupSubjects_TeacherSubjects_TeacherSubjectId",
+                        column: x => x.TeacherSubjectId,
                         principalTable: "TeacherSubjects",
-                        principalColumns: new[] { "TeacherId", "SubjectId" },
+                        principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_GroupSubjects_Teachers_TeacherId",
                         column: x => x.TeacherId,
                         principalTable: "Teachers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        principalColumn: "Id");
                 });
+
+            migrationBuilder.CreateTable(
+                name: "Schedules",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    ApplicationDayOfWeekId = table.Column<int>(type: "integer", nullable: false),
+                    PairId = table.Column<int>(type: "integer", nullable: false),
+                    IsEvenWeek = table.Column<bool>(type: "boolean", nullable: false),
+                    GroupSubjectId = table.Column<int>(type: "integer", nullable: false),
+                    GroupId = table.Column<int>(type: "integer", nullable: true),
+                    SemesterId = table.Column<int>(type: "integer", nullable: true),
+                    SubjectId = table.Column<int>(type: "integer", nullable: true),
+                    TeacherId = table.Column<int>(type: "integer", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Schedules", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Schedules_ApplicationDaysOfWeek_ApplicationDayOfWeekId",
+                        column: x => x.ApplicationDayOfWeekId,
+                        principalTable: "ApplicationDaysOfWeek",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Schedules_GroupSubjects_GroupSubjectId",
+                        column: x => x.GroupSubjectId,
+                        principalTable: "GroupSubjects",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Schedules_Groups_GroupId",
+                        column: x => x.GroupId,
+                        principalTable: "Groups",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Schedules_Pairs_PairId",
+                        column: x => x.PairId,
+                        principalTable: "Pairs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_Schedules_Semesters_SemesterId",
+                        column: x => x.SemesterId,
+                        principalTable: "Semesters",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Schedules_Subjects_SubjectId",
+                        column: x => x.SubjectId,
+                        principalTable: "Subjects",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Schedules_Teachers_TeacherId",
+                        column: x => x.TeacherId,
+                        principalTable: "Teachers",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupSubjects_GroupId_TeacherSubjectId_SemesterId",
+                table: "GroupSubjects",
+                columns: new[] { "GroupId", "TeacherSubjectId", "SemesterId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupSubjects_SemesterId",
+                table: "GroupSubjects",
+                column: "SemesterId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_GroupSubjects_SubjectId",
@@ -407,40 +463,20 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 column: "SubjectId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_GroupSubjects_TeacherId_SubjectId",
+                name: "IX_GroupSubjects_TeacherId",
                 table: "GroupSubjects",
-                columns: new[] { "TeacherId", "SubjectId" });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Schedule_ApplicationDayOfWeekId_PairId_GroupId",
-                table: "Schedule",
-                columns: new[] { "ApplicationDayOfWeekId", "PairId", "GroupId" },
-                unique: true);
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Schedule_GroupId",
-                table: "Schedule",
-                column: "GroupId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Schedule_PairId",
-                table: "Schedule",
-                column: "PairId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Schedule_SemesterId",
-                table: "Schedule",
-                column: "SemesterId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Schedule_SubjectId",
-                table: "Schedule",
-                column: "SubjectId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Schedule_TeacherId",
-                table: "Schedule",
                 column: "TeacherId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_GroupSubjects_TeacherSubjectId",
+                table: "GroupSubjects",
+                column: "TeacherSubjectId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Regions_TimeZoneId",
+                table: "Regions",
+                column: "TimeZoneId",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_ScheduleOverrides_GroupId",
@@ -458,6 +494,42 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 column: "SubstituteDayOfWeekId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Schedules_ApplicationDayOfWeekId_PairId_GroupSubjectId_IsEv~",
+                table: "Schedules",
+                columns: new[] { "ApplicationDayOfWeekId", "PairId", "GroupSubjectId", "IsEvenWeek" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Schedules_GroupId",
+                table: "Schedules",
+                column: "GroupId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Schedules_GroupSubjectId",
+                table: "Schedules",
+                column: "GroupSubjectId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Schedules_PairId",
+                table: "Schedules",
+                column: "PairId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Schedules_SemesterId",
+                table: "Schedules",
+                column: "SemesterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Schedules_SubjectId",
+                table: "Schedules",
+                column: "SubjectId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Schedules_TeacherId",
+                table: "Schedules",
+                column: "TeacherId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Semesters_StartDate_EndDate",
                 table: "Semesters",
                 columns: new[] { "StartDate", "EndDate" },
@@ -469,9 +541,15 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 column: "InfoTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Subjects_Name_SubjectTypeId",
+                name: "IX_SubjectNames_Abbreviation",
+                table: "SubjectNames",
+                column: "Abbreviation",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Subjects_SubjectNameId_SubjectTypeId",
                 table: "Subjects",
-                columns: new[] { "Name", "SubjectTypeId" },
+                columns: new[] { "SubjectNameId", "SubjectTypeId" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -485,14 +563,25 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 column: "InfoTypeId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_TeacherSubjects_SocialMediaTypesId",
+                name: "IX_TeacherSubjects_SocialMediaTypeId",
                 table: "TeacherSubjects",
-                column: "SocialMediaTypesId");
+                column: "SocialMediaTypeId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TeacherSubjects_SocialMediaTypeId1",
+                table: "TeacherSubjects",
+                column: "SocialMediaTypeId1");
 
             migrationBuilder.CreateIndex(
                 name: "IX_TeacherSubjects_SubjectId",
                 table: "TeacherSubjects",
                 column: "SubjectId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_TeacherSubjects_TeacherId_SubjectId",
+                table: "TeacherSubjects",
+                columns: new[] { "TeacherId", "SubjectId" },
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_Users_GroupId",
@@ -515,13 +604,10 @@ namespace ScheduleBotApi.Infrastructure.Migrations
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "GroupSubjects");
-
-            migrationBuilder.DropTable(
-                name: "Schedule");
-
-            migrationBuilder.DropTable(
                 name: "ScheduleOverrides");
+
+            migrationBuilder.DropTable(
+                name: "Schedules");
 
             migrationBuilder.DropTable(
                 name: "SubjectInfos");
@@ -533,28 +619,31 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 name: "Users");
 
             migrationBuilder.DropTable(
-                name: "TeacherSubjects");
-
-            migrationBuilder.DropTable(
-                name: "Pairs");
-
-            migrationBuilder.DropTable(
-                name: "Semesters");
+                name: "OverrideTypes");
 
             migrationBuilder.DropTable(
                 name: "ApplicationDaysOfWeek");
 
             migrationBuilder.DropTable(
-                name: "OverrideTypes");
+                name: "GroupSubjects");
+
+            migrationBuilder.DropTable(
+                name: "Pairs");
 
             migrationBuilder.DropTable(
                 name: "InfoTypes");
 
             migrationBuilder.DropTable(
+                name: "Regions");
+
+            migrationBuilder.DropTable(
                 name: "Groups");
 
             migrationBuilder.DropTable(
-                name: "Regions");
+                name: "Semesters");
+
+            migrationBuilder.DropTable(
+                name: "TeacherSubjects");
 
             migrationBuilder.DropTable(
                 name: "SocialMediaTypes");
@@ -564,6 +653,9 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
             migrationBuilder.DropTable(
                 name: "Teachers");
+
+            migrationBuilder.DropTable(
+                name: "SubjectNames");
 
             migrationBuilder.DropTable(
                 name: "SubjectTypes");
