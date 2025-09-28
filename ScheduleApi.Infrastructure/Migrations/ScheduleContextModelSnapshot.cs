@@ -457,7 +457,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.Property<int?>("SocialMediaTypeId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SocialMediaTypesId")
+                    b.Property<int?>("SocialMediaTypeId1")
                         .HasColumnType("integer");
 
                     b.Property<int>("SubjectId")
@@ -470,7 +470,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
                     b.HasIndex("SocialMediaTypeId");
 
-                    b.HasIndex("SocialMediaTypesId");
+                    b.HasIndex("SocialMediaTypeId1");
 
                     b.HasIndex("SubjectId");
 
@@ -675,13 +675,13 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
             modelBuilder.Entity("ScheduleApi.Core.Entities.TeacherSubject", b =>
                 {
-                    b.HasOne("ScheduleApi.Core.Entities.SocialMediaType", null)
-                        .WithMany("TeacherSubjects")
-                        .HasForeignKey("SocialMediaTypeId");
-
                     b.HasOne("ScheduleApi.Core.Entities.SocialMediaType", "SocialMediaType")
                         .WithMany()
-                        .HasForeignKey("SocialMediaTypesId");
+                        .HasForeignKey("SocialMediaTypeId");
+
+                    b.HasOne("ScheduleApi.Core.Entities.SocialMediaType", null)
+                        .WithMany("TeacherSubjects")
+                        .HasForeignKey("SocialMediaTypeId1");
 
                     b.HasOne("ScheduleApi.Core.Entities.Subject", "Subject")
                         .WithMany("TeacherSubjects")
