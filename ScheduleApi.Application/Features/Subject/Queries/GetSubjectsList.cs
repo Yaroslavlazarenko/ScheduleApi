@@ -27,19 +27,13 @@ public static class GetSubjectsList
         {
             var subjectNameGroups = await _ctx.SubjectNames
                 .AsNoTracking()
-                .Include(sn => sn.Subjects)
-                .ThenInclude(s => s.SubjectType)
                 .OrderBy(sn => sn.FullName)
                 .Select(sn => new GroupedSubjectDto
                 {
+                    SubjectNameId = sn.Id,
                     Name = sn.FullName,
                     ShortName = sn.ShortName,
-                    Abbreviation = sn.Abbreviation,
-                    Variants = sn.Subjects.Select(subjectInGroup => new SubjectVariantDto
-                    {
-                        Id = subjectInGroup.Id,
-                        SubjectType = _mapper.Map<SubjectTypeDto>(subjectInGroup.SubjectType)
-                    }).ToList()
+                    Abbreviation = sn.Abbreviation
                 })
                 .ToListAsync(cancellationToken);
 
