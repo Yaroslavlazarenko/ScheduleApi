@@ -7,4 +7,5 @@ public class Semester
     public DateTime EndDate { get; set; }
 
     public ICollection<Schedule> Schedules { get; set; }
+    public ICollection<GroupSubject> GroupSubjects { get; set; }
 }
