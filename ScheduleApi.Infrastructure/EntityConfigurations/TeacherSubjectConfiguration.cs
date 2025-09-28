@@ -24,7 +24,7 @@ public class TeacherSubjectConfiguration : IEntityTypeConfiguration<TeacherSubje
             .OnDelete(DeleteBehavior.Cascade);
         
         builder.HasOne(ts => ts.SocialMediaType)
-            .WithMany()
+            .WithMany(smt => smt.TeacherSubjects)
             .HasForeignKey(ts => ts.SocialMediaTypeId)
             .OnDelete(DeleteBehavior.Restrict);
     }
