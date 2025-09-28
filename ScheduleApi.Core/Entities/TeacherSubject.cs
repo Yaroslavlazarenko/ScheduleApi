@@ -7,7 +7,7 @@ public class TeacherSubject
     public int SubjectId { get; set; }
     
     public string? LessonUrl { get; set; }
-    public int? SocialMediaTypesId { get; set; }
+    public int? SocialMediaTypeId { get; set; }
     
     public Teacher Teacher { get; set; }
     public Subject Subject { get; set; }

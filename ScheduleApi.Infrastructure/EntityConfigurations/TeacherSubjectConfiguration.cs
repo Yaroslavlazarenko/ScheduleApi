@@ -23,6 +23,6 @@ public class TeacherSubjectConfiguration : IEntityTypeConfiguration<TeacherSubje
         
         builder.HasOne(ts => ts.SocialMediaType)
             .WithMany()
-            .HasForeignKey(ts => ts.SocialMediaTypesId);
+            .HasForeignKey(ts => ts.SocialMediaTypeId);
     }
 }
