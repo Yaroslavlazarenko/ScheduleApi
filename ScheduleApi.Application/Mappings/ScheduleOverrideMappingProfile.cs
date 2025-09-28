@@ -10,12 +10,15 @@ public class ScheduleOverrideMappingProfile : Profile
     {
         CreateMap<MutateScheduleOverrideDto, ScheduleOverride>();
 
+        CreateMap<ScheduleOverride, ScheduleOverrideInfoDto>()
+            .ForMember(dest => dest.SubstitutedDayName, opt => opt.MapFrom(src => src.SubstituteDayOfWeek.Name));
+        
         CreateMap<ScheduleOverride, ScheduleOverrideDto>()
             .ForMember(dest => dest.OverrideTypeName,
                 opt => opt.MapFrom(src => src.OverrideType.Name))
             .ForMember(dest => dest.SubstituteDayOfWeekName,
-                opt => opt.MapFrom(src => src.SubstituteDayOfWeek != null ? src.SubstituteDayOfWeek.Name : null))
+                opt => opt.MapFrom(src => src.SubstituteDayOfWeek.Name))
             .ForMember(dest => dest.GroupName,
-                opt => opt.MapFrom(src => src.Group != null ? src.Group.Name : null));
+                opt => opt.MapFrom(src => src.Group.Name));
     }
 }

@@ -49,14 +49,26 @@ public static class GetGroupDailySchedule
             var targetDateTimeForQuery = new DateTime(targetDate.Year, targetDate.Month, targetDate.Day, 0, 0, 0, DateTimeKind.Utc);
             
             var actualDayOfWeekId = (int)targetDate.DayOfWeek == 0 ? 7 : (int)targetDate.DayOfWeek;
-            var actualDayOfWeekEntity = await _ctx.ApplicationDaysOfWeek.FirstAsync(d => d.Id == actualDayOfWeekId, cancellationToken);
+            
+            var actualDayOfWeekEntity = await _ctx.ApplicationDaysOfWeek
+                .FirstOrDefaultAsync(d => d.Id == actualDayOfWeekId, cancellationToken);
 
+            if (actualDayOfWeekEntity is null)
+            {
+                var dummyDayOfWeek = new Core.Entities.ApplicationDayOfWeek 
+                { 
+                    Name = targetDate.DayOfWeek.ToString(), 
+                    Abbreviation = targetDate.DayOfWeek.ToString().Substring(0, 2)
+                };
+                return CreateHeaderOnlySchedule(targetDate, dummyDayOfWeek, group);
+            }
+            
             var semester = await _ctx.Semesters.AsNoTracking()
                 .FirstOrDefaultAsync(s => s.StartDate <= targetDateTimeForQuery && s.EndDate >= targetDateTimeForQuery, cancellationToken);
 
             if (semester is null)
                 return CreateHeaderOnlySchedule(targetDate, actualDayOfWeekEntity, group);
-
+                
             var semesterStartDate = DateOnly.FromDateTime(semester.StartDate.ToUniversalTime());
             var weekNumber = CalculateWeekNumber(semesterStartDate, targetDate);
             var isEvenWeek = (weekNumber % 2) == 0;
