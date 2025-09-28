@@ -7,6 +7,5 @@ public class Group
 
     public ICollection<User> Users { get; set; }
     public ICollection<GroupSubject> GroupSubjects { get; set; }
-    public ICollection<Schedule> Schedules { get; set; }
     public ICollection<ScheduleOverride> ScheduleOverrides { get; set; }
 }

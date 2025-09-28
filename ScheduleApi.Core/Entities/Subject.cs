@@ -12,6 +12,4 @@ public class Subject
     
     public ICollection<TeacherSubject> TeacherSubjects { get; set; }
     public ICollection<SubjectInfo> SubjectInfos { get; set; }
-    public ICollection<GroupSubject> GroupSubjects { get; set; }
-    public ICollection<Schedule> Schedules { get; set; }
 }
