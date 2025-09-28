@@ -44,7 +44,12 @@ public static class GetGroupWeeklySchedule
 
             var dailySchedules = (await Task.WhenAll(dailyScheduleTasks)).ToList();
 
-            var firstDaySchedule = dailySchedules.First();
+            var firstDaySchedule = dailySchedules.FirstOrDefault();
+            
+            if (firstDaySchedule is null)
+            {
+                throw new NotFoundException($"Не вдалося зенерувати розклад на тиждень для групи {request.GroupId}.");
+            }
             
             var weeklySchedule = new WeeklyScheduleDto
             {
