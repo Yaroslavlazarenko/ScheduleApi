@@ -9,6 +9,4 @@ public class Teacher
 
     public ICollection<TeacherSubject> TeacherSubjects { get; set; }
     public ICollection<TeacherInfo> TeacherInfos { get; set; }
-    public ICollection<GroupSubject> GroupSubjects { get; set; }
-    public ICollection<Schedule> Schedules { get; set; }
 }
