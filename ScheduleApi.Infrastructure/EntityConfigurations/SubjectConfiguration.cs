@@ -15,10 +15,12 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
 
         builder.HasOne(s => s.SubjectType)
             .WithMany(st => st.Subjects)
-            .HasForeignKey(s => s.SubjectTypeId);
+            .HasForeignKey(s => s.SubjectTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
         
         builder.HasOne(s => s.SubjectName)
             .WithMany(sn => sn.Subjects)
-            .HasForeignKey(s => s.SubjectNameId);
+            .HasForeignKey(s => s.SubjectNameId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

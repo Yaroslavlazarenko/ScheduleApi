@@ -18,14 +18,17 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
         
         builder.HasOne(s => s.ApplicationDayOfWeek)
             .WithMany(d => d.Schedules)
-            .HasForeignKey(s => s.ApplicationDayOfWeekId);
+            .HasForeignKey(s => s.ApplicationDayOfWeekId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(s => s.Pair)
             .WithMany(p => p.Schedules)
-            .HasForeignKey(s => s.PairId);
+            .HasForeignKey(s => s.PairId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(s => s.GroupSubject)
             .WithMany(gs => gs.Schedules)
-            .HasForeignKey(s => s.GroupSubjectId);
+            .HasForeignKey(s => s.GroupSubjectId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

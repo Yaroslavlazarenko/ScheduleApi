@@ -12,8 +12,8 @@ using ScheduleBotApi.Infrastructure.Contexts;
 namespace ScheduleBotApi.Infrastructure.Migrations
 {
     [DbContext(typeof(ScheduleContext))]
-    [Migration("20250928103553_FixTeacherSubjectSocialMediaTypeColumn")]
-    partial class FixTeacherSubjectSocialMediaTypeColumn
+    [Migration("20250928123721_EditDeleteBehaviors")]
+    partial class EditDeleteBehaviors
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -419,7 +419,6 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("MiddleName")
-                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Id");
@@ -558,7 +557,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.HasOne("ScheduleApi.Core.Entities.ApplicationDayOfWeek", "ApplicationDayOfWeek")
                         .WithMany("Schedules")
                         .HasForeignKey("ApplicationDayOfWeekId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ScheduleApi.Core.Entities.Group", null)
@@ -574,7 +573,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.HasOne("ScheduleApi.Core.Entities.Pair", "Pair")
                         .WithMany("Schedules")
                         .HasForeignKey("PairId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ScheduleApi.Core.Entities.Semester", null)
@@ -600,17 +599,19 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 {
                     b.HasOne("ScheduleApi.Core.Entities.Group", "Group")
                         .WithMany("ScheduleOverrides")
-                        .HasForeignKey("GroupId");
+                        .HasForeignKey("GroupId")
+                        .OnDelete(DeleteBehavior.Cascade);
 
                     b.HasOne("ScheduleApi.Core.Entities.OverrideType", "OverrideType")
                         .WithMany("ScheduleOverrides")
                         .HasForeignKey("OverrideTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ScheduleApi.Core.Entities.ApplicationDayOfWeek", "SubstituteDayOfWeek")
                         .WithMany("ScheduleOverrides")
-                        .HasForeignKey("SubstituteDayOfWeekId");
+                        .HasForeignKey("SubstituteDayOfWeekId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Group");
 
@@ -624,13 +625,13 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.HasOne("ScheduleApi.Core.Entities.SubjectName", "SubjectName")
                         .WithMany("Subjects")
                         .HasForeignKey("SubjectNameId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ScheduleApi.Core.Entities.SubjectType", "SubjectType")
                         .WithMany("Subjects")
                         .HasForeignKey("SubjectTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("SubjectName");
@@ -643,7 +644,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.HasOne("ScheduleApi.Core.Entities.InfoType", "InfoType")
                         .WithMany("SubjectInfos")
                         .HasForeignKey("InfoTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ScheduleApi.Core.Entities.Subject", "Subject")
@@ -662,7 +663,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.HasOne("ScheduleApi.Core.Entities.InfoType", "InfoType")
                         .WithMany("TeacherInfos")
                         .HasForeignKey("InfoTypeId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ScheduleApi.Core.Entities.Teacher", "Teacher")
@@ -680,7 +681,8 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                 {
                     b.HasOne("ScheduleApi.Core.Entities.SocialMediaType", "SocialMediaType")
                         .WithMany()
-                        .HasForeignKey("SocialMediaTypeId");
+                        .HasForeignKey("SocialMediaTypeId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ScheduleApi.Core.Entities.SocialMediaType", null)
                         .WithMany("TeacherSubjects")
@@ -710,13 +712,13 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.HasOne("ScheduleApi.Core.Entities.Group", "Group")
                         .WithMany("Users")
                         .HasForeignKey("GroupId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("ScheduleApi.Core.Entities.Region", "Region")
                         .WithMany("Users")
                         .HasForeignKey("RegionId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.Navigation("Group");

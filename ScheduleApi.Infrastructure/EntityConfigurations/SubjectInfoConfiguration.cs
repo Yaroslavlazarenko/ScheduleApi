@@ -12,10 +12,12 @@ public class SubjectInfoConfiguration : IEntityTypeConfiguration<SubjectInfo>
 
         builder.HasOne(si => si.Subject)
             .WithMany(s => s.SubjectInfos)
-            .HasForeignKey(si => si.SubjectId);
+            .HasForeignKey(si => si.SubjectId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(si => si.InfoType)
             .WithMany(it => it.SubjectInfos)
-            .HasForeignKey(si => si.InfoTypeId);
+            .HasForeignKey(si => si.InfoTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

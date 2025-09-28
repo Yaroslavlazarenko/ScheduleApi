@@ -14,12 +14,14 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
         
         builder.HasIndex(u => u.TelegramId).IsUnique();
 
-        builder.HasOne(s => s.Group)
+        builder.HasOne(u => u.Group)
             .WithMany(g => g.Users)
-            .HasForeignKey(s => s.GroupId);
+            .HasForeignKey(u => u.GroupId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(s => s.Region)
-            .WithMany(tz => tz.Users)
-            .HasForeignKey(s => s.RegionId);
+        builder.HasOne(u => u.Region)
+            .WithMany(r => r.Users)
+            .HasForeignKey(u => u.RegionId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
