@@ -30,6 +30,7 @@ public class ScheduleContext : DbContext
     public DbSet<TeacherInfo> TeacherInfos { get; set; }
     public DbSet<TeacherSubject> TeacherSubjects { get; set; }
     public DbSet<User> Users { get; set; }
+    public DbSet<Broadcast> Broadcasts { get; set; }
     
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
