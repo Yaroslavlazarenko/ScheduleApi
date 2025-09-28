@@ -25,17 +25,17 @@ public static class GetSubjectsList
 
         public async Task<List<GroupedSubjectDto>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var groupedSubjects = await _ctx.Subjects
+            var subjectNameGroups = await _ctx.SubjectNames
                 .AsNoTracking()
-                .Include(s => s.SubjectType)
-                .OrderBy(s => s.Name)
-                .GroupBy(s => new { s.Name, s.ShortName, s.Abbreviation })
-                .Select(group => new GroupedSubjectDto
+                .Include(sn => sn.Subjects)
+                .ThenInclude(s => s.SubjectType)
+                .OrderBy(sn => sn.FullName)
+                .Select(sn => new GroupedSubjectDto
                 {
-                    Name = group.Key.Name,
-                    ShortName = group.Key.ShortName,
-                    Abbreviation = group.Key.Abbreviation,
-                    Variants = group.Select(subjectInGroup => new SubjectVariantDto
+                    Name = sn.FullName,
+                    ShortName = sn.ShortName,
+                    Abbreviation = sn.Abbreviation,
+                    Variants = sn.Subjects.Select(subjectInGroup => new SubjectVariantDto
                     {
                         Id = subjectInGroup.Id,
                         SubjectType = _mapper.Map<SubjectTypeDto>(subjectInGroup.SubjectType)
@@ -43,7 +43,7 @@ public static class GetSubjectsList
                 })
                 .ToListAsync(cancellationToken);
 
-            return groupedSubjects;
+            return subjectNameGroups;
         }
     }
 }

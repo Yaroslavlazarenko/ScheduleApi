@@ -14,7 +14,7 @@ public class TeacherSubjectMappingProfile : Profile
         
         CreateMap<TeacherSubject, TeacherSubjectDto>()
             .ForMember(dest => dest.SubjectName,
-                opt => opt.MapFrom(src => src.Subject.Name))
+                opt => opt.MapFrom(src => src.Subject.SubjectName.FullName))
             .ForMember(dest => dest.SocialMediaTypeName,
                 opt => opt.MapFrom(src => src.SocialMediaType.Name));
     }

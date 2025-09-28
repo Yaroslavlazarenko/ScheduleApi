@@ -10,11 +10,15 @@ public class SubjectConfiguration : IEntityTypeConfiguration<Subject>
     {
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id).ValueGeneratedOnAdd();
-
-        builder.HasIndex(s => new { s.Name, s.SubjectTypeId }).IsUnique();
+        
+        builder.HasIndex(s => new { s.SubjectNameId, s.SubjectTypeId }).IsUnique();
 
         builder.HasOne(s => s.SubjectType)
             .WithMany(st => st.Subjects)
             .HasForeignKey(s => s.SubjectTypeId);
+        
+        builder.HasOne(s => s.SubjectName)
+            .WithMany(sn => sn.Subjects)
+            .HasForeignKey(s => s.SubjectNameId);
     }
 }
