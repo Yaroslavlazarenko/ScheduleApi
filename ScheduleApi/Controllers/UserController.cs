@@ -78,4 +78,15 @@ public class UserController : ControllerBase
         await _mediator.Send(new ChangeUserRegion.Command(userId, changeRegionDto));
         return NoContent();
     }
+    
+    [HttpGet("{userId:int}/schedule/week")]
+    [ProducesResponseType(typeof(WeeklyScheduleDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GetWeeklySchedule(int userId, [FromQuery] DateTime? date)
+    {
+        var query = new GetWeeklyScheduleForUser.Query(userId, date);
+        var result = await _mediator.Send(query);
+        return Ok(result);
+    }
 }
