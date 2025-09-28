@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using ScheduleBotApi.Infrastructure.Contexts;
@@ -11,9 +12,11 @@ using ScheduleBotApi.Infrastructure.Contexts;
 namespace ScheduleBotApi.Infrastructure.Migrations
 {
     [DbContext(typeof(ScheduleContext))]
-    partial class ScheduleContextModelSnapshot : ModelSnapshot
+    [Migration("20250928084405_RefactorSubjectNames")]
+    partial class RefactorSubjectNames
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -62,39 +65,20 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
             modelBuilder.Entity("ScheduleApi.Core.Entities.GroupSubject", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
                     b.Property<int>("GroupId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("SemesterId")
+                    b.Property<int>("TeacherId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SubjectId")
+                    b.Property<int>("SubjectId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TeacherId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("TeacherSubjectId")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("SemesterId");
+                    b.HasKey("GroupId", "TeacherId", "SubjectId");
 
                     b.HasIndex("SubjectId");
 
-                    b.HasIndex("TeacherId");
-
-                    b.HasIndex("TeacherSubjectId");
-
-                    b.HasIndex("GroupId", "TeacherSubjectId", "SemesterId")
-                        .IsUnique();
+                    b.HasIndex("TeacherId", "SubjectId");
 
                     b.ToTable("GroupSubjects");
                 });
@@ -190,10 +174,7 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.Property<int>("ApplicationDayOfWeekId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("GroupId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("GroupSubjectId")
+                    b.Property<int>("GroupId")
                         .HasColumnType("integer");
 
                     b.Property<bool>("IsEvenWeek")
@@ -202,20 +183,18 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.Property<int>("PairId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SemesterId")
+                    b.Property<int>("SemesterId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("SubjectId")
+                    b.Property<int>("SubjectId")
                         .HasColumnType("integer");
 
-                    b.Property<int?>("TeacherId")
+                    b.Property<int>("TeacherId")
                         .HasColumnType("integer");
 
                     b.HasKey("Id");
 
                     b.HasIndex("GroupId");
-
-                    b.HasIndex("GroupSubjectId");
 
                     b.HasIndex("PairId");
 
@@ -225,10 +204,10 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.HasIndex("ApplicationDayOfWeekId", "PairId", "GroupSubjectId", "IsEvenWeek")
+                    b.HasIndex("ApplicationDayOfWeekId", "PairId", "GroupId", "IsEvenWeek")
                         .IsUnique();
 
-                    b.ToTable("Schedules", (string)null);
+                    b.ToTable("Schedule", (string)null);
                 });
 
             modelBuilder.Entity("ScheduleApi.Core.Entities.ScheduleOverride", b =>
@@ -445,37 +424,23 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
             modelBuilder.Entity("ScheduleApi.Core.Entities.TeacherSubject", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("LessonUrl")
-                        .HasColumnType("text");
-
-                    b.Property<int?>("SocialMediaTypeId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("SocialMediaTypesId")
+                    b.Property<int>("TeacherId")
                         .HasColumnType("integer");
 
                     b.Property<int>("SubjectId")
                         .HasColumnType("integer");
 
-                    b.Property<int>("TeacherId")
+                    b.Property<string>("LessonUrl")
+                        .HasColumnType("text");
+
+                    b.Property<int?>("SocialMediaTypesId")
                         .HasColumnType("integer");
 
-                    b.HasKey("Id");
-
-                    b.HasIndex("SocialMediaTypeId");
+                    b.HasKey("TeacherId", "SubjectId");
 
                     b.HasIndex("SocialMediaTypesId");
 
                     b.HasIndex("SubjectId");
-
-                    b.HasIndex("TeacherId", "SubjectId")
-                        .IsUnique();
 
                     b.ToTable("TeacherSubjects");
                 });
@@ -523,29 +488,29 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ScheduleApi.Core.Entities.Semester", "Semester")
+                    b.HasOne("ScheduleApi.Core.Entities.Subject", "Subject")
                         .WithMany("GroupSubjects")
-                        .HasForeignKey("SemesterId")
-                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("ScheduleApi.Core.Entities.Subject", null)
+                    b.HasOne("ScheduleApi.Core.Entities.Teacher", "Teacher")
                         .WithMany("GroupSubjects")
-                        .HasForeignKey("SubjectId");
-
-                    b.HasOne("ScheduleApi.Core.Entities.Teacher", null)
-                        .WithMany("GroupSubjects")
-                        .HasForeignKey("TeacherId");
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
 
                     b.HasOne("ScheduleApi.Core.Entities.TeacherSubject", "TeacherSubject")
                         .WithMany("GroupSubjects")
-                        .HasForeignKey("TeacherSubjectId")
+                        .HasForeignKey("TeacherId", "SubjectId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Group");
 
-                    b.Navigation("Semester");
+                    b.Navigation("Subject");
+
+                    b.Navigation("Teacher");
 
                     b.Navigation("TeacherSubject");
                 });
@@ -558,13 +523,9 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ScheduleApi.Core.Entities.Group", null)
+                    b.HasOne("ScheduleApi.Core.Entities.Group", "Group")
                         .WithMany("Schedules")
-                        .HasForeignKey("GroupId");
-
-                    b.HasOne("ScheduleApi.Core.Entities.GroupSubject", "GroupSubject")
-                        .WithMany("Schedules")
-                        .HasForeignKey("GroupSubjectId")
+                        .HasForeignKey("GroupId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -574,23 +535,35 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ScheduleApi.Core.Entities.Semester", null)
+                    b.HasOne("ScheduleApi.Core.Entities.Semester", "Semester")
                         .WithMany("Schedules")
-                        .HasForeignKey("SemesterId");
+                        .HasForeignKey("SemesterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("ScheduleApi.Core.Entities.Subject", null)
+                    b.HasOne("ScheduleApi.Core.Entities.Subject", "Subject")
                         .WithMany("Schedules")
-                        .HasForeignKey("SubjectId");
+                        .HasForeignKey("SubjectId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.HasOne("ScheduleApi.Core.Entities.Teacher", null)
+                    b.HasOne("ScheduleApi.Core.Entities.Teacher", "Teacher")
                         .WithMany("Schedules")
-                        .HasForeignKey("TeacherId");
+                        .HasForeignKey("TeacherId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("ApplicationDayOfWeek");
 
-                    b.Navigation("GroupSubject");
+                    b.Navigation("Group");
 
                     b.Navigation("Pair");
+
+                    b.Navigation("Semester");
+
+                    b.Navigation("Subject");
+
+                    b.Navigation("Teacher");
                 });
 
             modelBuilder.Entity("ScheduleApi.Core.Entities.ScheduleOverride", b =>
@@ -675,12 +648,8 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
             modelBuilder.Entity("ScheduleApi.Core.Entities.TeacherSubject", b =>
                 {
-                    b.HasOne("ScheduleApi.Core.Entities.SocialMediaType", null)
-                        .WithMany("TeacherSubjects")
-                        .HasForeignKey("SocialMediaTypeId");
-
                     b.HasOne("ScheduleApi.Core.Entities.SocialMediaType", "SocialMediaType")
-                        .WithMany()
+                        .WithMany("TeacherSubjects")
                         .HasForeignKey("SocialMediaTypesId");
 
                     b.HasOne("ScheduleApi.Core.Entities.Subject", "Subject")
@@ -739,11 +708,6 @@ namespace ScheduleBotApi.Infrastructure.Migrations
                     b.Navigation("Users");
                 });
 
-            modelBuilder.Entity("ScheduleApi.Core.Entities.GroupSubject", b =>
-                {
-                    b.Navigation("Schedules");
-                });
-
             modelBuilder.Entity("ScheduleApi.Core.Entities.InfoType", b =>
                 {
                     b.Navigation("SubjectInfos");
@@ -768,8 +732,6 @@ namespace ScheduleBotApi.Infrastructure.Migrations
 
             modelBuilder.Entity("ScheduleApi.Core.Entities.Semester", b =>
                 {
-                    b.Navigation("GroupSubjects");
-
                     b.Navigation("Schedules");
                 });
 

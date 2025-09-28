@@ -25,28 +25,31 @@ public static class AssignSubjectToGroup
             if (!await _ctx.Groups.AnyAsync(g => g.Id == request.GroupId, cancellationToken))
                 throw new NotFoundException("Group not found");
             
-            if (!await _ctx.Subjects.AnyAsync(s => s.Id == request.Model.SubjectId, cancellationToken))
-                throw new NotFoundException("Subject not found");
-
-            if (!await _ctx.Teachers.AnyAsync(t => t.Id == request.Model.TeacherId, cancellationToken))
-                throw new NotFoundException("Teacher not found");
+            if (!await _ctx.Semesters.AnyAsync(s => s.Id == request.Model.SemesterId, cancellationToken))
+                throw new NotFoundException("Semester not found");
             
-            var teacherCanTeachSubject = await _ctx.TeacherSubjects
-                .AnyAsync(ts => ts.TeacherId == request.Model.TeacherId && ts.SubjectId == request.Model.SubjectId, cancellationToken);
+            var teacherSubject = await _ctx.TeacherSubjects
+                .AsNoTracking()
+                .FirstOrDefaultAsync(ts => ts.TeacherId == request.Model.TeacherId && ts.SubjectId == request.Model.SubjectId, cancellationToken);
             
-            if (!teacherCanTeachSubject)
+            if (teacherSubject is null)
                 throw new BadRequestException("This teacher is not assigned to this subject.");
             
             var assignmentExists = await _ctx.GroupSubjects
-                .AnyAsync(gs => gs.GroupId == request.GroupId && gs.SubjectId == request.Model.SubjectId && gs.TeacherId == request.Model.TeacherId, cancellationToken);
+                .AnyAsync(gs => 
+                    gs.GroupId == request.GroupId && 
+                    gs.TeacherSubjectId == teacherSubject.Id && 
+                    gs.SemesterId == request.Model.SemesterId, 
+                    cancellationToken);
+
             if (assignmentExists)
-                throw new BadRequestException("This assignment already exists for this group.");
+                throw new BadRequestException("This assignment already exists for this group in this semester.");
             
             var newAssignment = new Core.Entities.GroupSubject
             {
                 GroupId = request.GroupId,
-                SubjectId = request.Model.SubjectId,
-                TeacherId = request.Model.TeacherId
+                TeacherSubjectId = teacherSubject.Id,
+                SemesterId = request.Model.SemesterId
             };
 
             await _ctx.GroupSubjects.AddAsync(newAssignment, cancellationToken);

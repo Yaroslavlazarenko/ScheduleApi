@@ -28,7 +28,8 @@ public static class GetGroupedSubjectDetails
         public async Task<GroupedSubjectDetailsDto> Handle(Query request, CancellationToken cancellationToken)
         {
             var subjects = await _ctx.Subjects
-                .Where(s => s.Abbreviation == request.Abbreviation)
+                .Where(s => s.SubjectName.Abbreviation == request.Abbreviation)
+                .Include(s => s.SubjectName)
                 .Include(s => s.SubjectType)
                 .Include(s => s.SubjectInfos).ThenInclude(si => si.InfoType)
                 .Include(s => s.TeacherSubjects
@@ -55,16 +56,16 @@ public static class GetGroupedSubjectDetails
 
             var resultDto = new GroupedSubjectDetailsDto
             {
-                Name = firstSubject.Name,
-                ShortName = firstSubject.ShortName,
-                Abbreviation = firstSubject.Abbreviation,
+                Name = firstSubject.SubjectName.FullName,
+                ShortName = firstSubject.SubjectName.ShortName,
+                Abbreviation = firstSubject.SubjectName.Abbreviation,
                 Variants = subjects.Select(s => new SubjectVariantDto
                 {
                     Id = s.Id,
                     SubjectType = _mapper.Map<SubjectTypeDto>(s.SubjectType),
                     Teachers = s.TeacherSubjects
-                                 .Select(ts => _mapper.Map<TeacherDto>(ts.Teacher))
-                                 .ToList(),
+                        .Select(ts => _mapper.Map<TeacherDto>(ts.Teacher))
+                        .ToList(),
                     Infos = _mapper.Map<List<SubjectInfoDto>>(s.SubjectInfos)
                 }).ToList()
             };

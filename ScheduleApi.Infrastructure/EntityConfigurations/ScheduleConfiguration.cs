@@ -8,12 +8,12 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
 {
     public void Configure(EntityTypeBuilder<Schedule> builder)
     {
-        builder.ToTable("Schedule");
-
+        builder.ToTable("Schedules");
+        
         builder.HasKey(s => s.Id);
         builder.Property(s => s.Id).ValueGeneratedOnAdd();
-
-        builder.HasIndex(s => new { s.ApplicationDayOfWeekId, s.PairId, s.GroupId, s.IsEvenWeek })
+        
+        builder.HasIndex(s => new { s.ApplicationDayOfWeekId, s.PairId, s.GroupSubjectId, s.IsEvenWeek })
             .IsUnique();
         
         builder.HasOne(s => s.ApplicationDayOfWeek)
@@ -24,20 +24,8 @@ public class ScheduleConfiguration : IEntityTypeConfiguration<Schedule>
             .WithMany(p => p.Schedules)
             .HasForeignKey(s => s.PairId);
 
-        builder.HasOne(s => s.Group)
-            .WithMany(g => g.Schedules)
-            .HasForeignKey(s => s.GroupId);
-
-        builder.HasOne(s => s.Teacher)
-            .WithMany(t => t.Schedules)
-            .HasForeignKey(s => s.TeacherId);
-
-        builder.HasOne(s => s.Subject)
-            .WithMany(sub => sub.Schedules)
-            .HasForeignKey(s => s.SubjectId);
-
-        builder.HasOne(s => s.Semester)
-            .WithMany(sem => sem.Schedules)
-            .HasForeignKey(s => s.SemesterId);
+        builder.HasOne(s => s.GroupSubject)
+            .WithMany(gs => gs.Schedules)
+            .HasForeignKey(s => s.GroupSubjectId);
     }
 }

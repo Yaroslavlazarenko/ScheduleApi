@@ -72,7 +72,14 @@ public static class GetGroupDailySchedule
             if (scheduleOverride == null || scheduleOverride.SubstituteDayOfWeekId.HasValue)
             {
                 lessonsWithUtcTime = await _ctx.Schedules.AsNoTracking()
-                    .Where(s => s.GroupId == request.GroupId && s.ApplicationDayOfWeekId == dayOfWeekToQuery && s.SemesterId == semester.Id && s.IsEvenWeek == isEvenWeek)
+                    .Where(s => 
+                        s.GroupSubject.GroupId == request.GroupId && 
+                        s.ApplicationDayOfWeekId == dayOfWeekToQuery && 
+                        s.GroupSubject.SemesterId == semester.Id && 
+                        s.IsEvenWeek == isEvenWeek)
+                    .Include(s => s.Pair)
+                    .Include(s => s.GroupSubject).ThenInclude(gs => gs.TeacherSubject).ThenInclude(ts => ts.Teacher)
+                    .Include(s => s.GroupSubject).ThenInclude(gs => gs.TeacherSubject).ThenInclude(ts => ts.Subject).ThenInclude(sub => sub.SubjectType)
                     .OrderBy(s => s.Pair.Number)
                     .ProjectTo<LessonDto>(_mapper.ConfigurationProvider)
                     .ToListAsync(cancellationToken);

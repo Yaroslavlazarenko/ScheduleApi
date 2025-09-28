@@ -8,18 +8,21 @@ public class TeacherSubjectConfiguration : IEntityTypeConfiguration<TeacherSubje
 {
     public void Configure(EntityTypeBuilder<TeacherSubject> builder)
     {
-        builder.HasKey(ts => new { ts.TeacherId, ts.SubjectId });
-
+        builder.HasKey(ts => ts.Id);
+        builder.Property(ts => ts.Id).ValueGeneratedOnAdd();
+        
+        builder.HasIndex(ts => new { ts.TeacherId, ts.SubjectId }).IsUnique();
+        
         builder.HasOne(ts => ts.Teacher)
             .WithMany(t => t.TeacherSubjects)
             .HasForeignKey(ts => ts.TeacherId);
-
+        
         builder.HasOne(ts => ts.Subject)
             .WithMany(s => s.TeacherSubjects)
             .HasForeignKey(ts => ts.SubjectId);
-
+        
         builder.HasOne(ts => ts.SocialMediaType)
-            .WithMany(smt => smt.TeacherSubjects)
+            .WithMany()
             .HasForeignKey(ts => ts.SocialMediaTypesId);
     }
 }

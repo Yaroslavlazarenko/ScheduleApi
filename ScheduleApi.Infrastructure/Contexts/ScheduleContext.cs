@@ -23,6 +23,7 @@ public class ScheduleContext : DbContext
     public DbSet<Semester> Semesters { get; set; }
     public DbSet<SocialMediaType> SocialMediaTypes { get; set; }
     public DbSet<Subject> Subjects { get; set; }
+    public DbSet<SubjectName> SubjectNames { get; set; }
     public DbSet<SubjectInfo> SubjectInfos { get; set; }
     public DbSet<SubjectType> SubjectTypes { get; set; }
     public DbSet<Teacher> Teachers { get; set; }

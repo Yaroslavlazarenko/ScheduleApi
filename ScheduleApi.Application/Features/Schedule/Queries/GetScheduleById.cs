@@ -28,6 +28,12 @@ public static class GetScheduleById
             var scheduleDto = await _ctx.Schedules
                 .AsNoTracking()
                 .Where(s => s.Id == request.Id)
+                .Include(s => s.ApplicationDayOfWeek)
+                .Include(s => s.Pair)
+                .Include(s => s.GroupSubject).ThenInclude(gs => gs.Group)
+                .Include(s => s.GroupSubject).ThenInclude(gs => gs.Semester)
+                .Include(s => s.GroupSubject).ThenInclude(gs => gs.TeacherSubject).ThenInclude(ts => ts.Teacher)
+                .Include(s => s.GroupSubject).ThenInclude(gs => gs.TeacherSubject).ThenInclude(ts => ts.Subject).ThenInclude(sub => sub.SubjectName)
                 .ProjectTo<ScheduleDto>(_mapper.ConfigurationProvider)
                 .FirstOrDefaultAsync(cancellationToken);
 

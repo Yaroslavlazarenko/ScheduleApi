@@ -25,38 +25,35 @@ public static class CreateSchedule
 
         public async Task<int> Handle(Command request, CancellationToken cancellationToken)
         {
-            if (!await _ctx.Groups.AnyAsync(g => g.Id == request.Model.GroupId, cancellationToken))
-                throw new NotFoundException("Group not found");
-            
-            if (!await _ctx.Teachers.AnyAsync(t => t.Id == request.Model.TeacherId, cancellationToken))
-                throw new NotFoundException("Teacher not found");
-            
             if (!await _ctx.Pairs.AnyAsync(p => p.Id == request.Model.PairId, cancellationToken))
                 throw new NotFoundException("Pair not found");
-
-            if (!await _ctx.Subjects.AnyAsync(s => s.Id == request.Model.SubjectId, cancellationToken))
-                throw new NotFoundException("Subject not found");
-
-            if (!await _ctx.Semesters.AnyAsync(s => s.Id == request.Model.SemesterId, cancellationToken))
-                throw new NotFoundException("Semester not found");
             
-            var assignmentExists = await _ctx.GroupSubjects.AnyAsync(gs =>
-                gs.GroupId == request.Model.GroupId &&
-                gs.TeacherId == request.Model.TeacherId &&
-                gs.SubjectId == request.Model.SubjectId, cancellationToken);
-            if (!assignmentExists)
-                throw new ValidationException("The teacher is not assigned to this subject for this group.");
+            if (!await _ctx.ApplicationDaysOfWeek.AnyAsync(d => d.Id == request.Model.ApplicationDayOfWeekId, cancellationToken))
+                throw new NotFoundException("Day of week not found");
             
-            var slotTaken = await _ctx.Schedules.AnyAsync(s =>
-                s.GroupId == request.Model.GroupId &&
-                s.ApplicationDayOfWeekId == request.Model.ApplicationDayOfWeekId &&
-                s.PairId == request.Model.PairId &&
-                s.SemesterId == request.Model.SemesterId &&
-                s.IsEvenWeek == request.Model.IsEvenWeek, cancellationToken);
+            var groupSubject = await _ctx.GroupSubjects
+                .AsNoTracking()
+                .Include(gs => gs.Group)
+                .FirstOrDefaultAsync(gs => gs.Id == request.Model.GroupSubjectId, cancellationToken);
+            
+            if (groupSubject is null)
+                throw new NotFoundException("The specified assignment (GroupSubject) was not found.");
+
+            var slotTaken = await _ctx.Schedules
+                .Include(s => s.GroupSubject)
+                .AnyAsync(s =>
+                    s.GroupSubject.GroupId == groupSubject.GroupId &&
+                    s.ApplicationDayOfWeekId == request.Model.ApplicationDayOfWeekId &&
+                    s.PairId == request.Model.PairId &&
+                    s.GroupSubject.SemesterId == groupSubject.SemesterId &&
+                    s.IsEvenWeek == request.Model.IsEvenWeek, 
+                    cancellationToken);
+
             if (slotTaken)
-                throw new ValidationException("This time slot for this group is already taken.");
+                throw new ValidationException("This time slot for this group is already taken in this semester.");
 
             var scheduleEntity = _mapper.Map<Core.Entities.Schedule>(request.Model);
+            
             await _ctx.Schedules.AddAsync(scheduleEntity, cancellationToken);
             await _ctx.SaveChangesAsync(cancellationToken);
 

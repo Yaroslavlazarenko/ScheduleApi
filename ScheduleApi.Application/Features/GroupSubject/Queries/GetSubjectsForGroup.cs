@@ -31,6 +31,9 @@ public static class GetSubjectsForGroup
             var list = await _ctx.GroupSubjects
                 .AsNoTracking()
                 .Where(gs => gs.GroupId == request.GroupId)
+                .Include(gs => gs.Semester)
+                .Include(gs => gs.TeacherSubject).ThenInclude(ts => ts.Teacher)
+                .Include(gs => gs.TeacherSubject).ThenInclude(ts => ts.Subject).ThenInclude(s => s.SubjectName)
                 .ProjectTo<GroupSubjectDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
 

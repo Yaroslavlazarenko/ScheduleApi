@@ -6,7 +6,7 @@ namespace ScheduleApi.Application.Features.GroupSubject.Commands;
 
 public static class UnassignSubjectFromGroup
 {
-    public record Command(int GroupId, int SubjectId, int TeacherId) : IRequest;
+    public record Command(int GroupSubjectId) : IRequest;
 
     private class Handler : IRequestHandler<Command>
     {
@@ -19,11 +19,10 @@ public static class UnassignSubjectFromGroup
 
         public async Task<Unit> Handle(Command request, CancellationToken cancellationToken)
         {
-            var assignment = await _ctx.GroupSubjects
-                .FindAsync(new object[] { request.GroupId, request.TeacherId, request.SubjectId }, cancellationToken);
+            var assignment = await _ctx.GroupSubjects.FindAsync(request.GroupSubjectId, cancellationToken);
 
             if (assignment is null)
-                throw new NotFoundException($"{nameof(GroupSubject)} GroupId={request.GroupId}, SubjectId={request.SubjectId}, TeacherId={request.TeacherId}");
+                throw new NotFoundException($"Assignment with Id={request.GroupSubjectId} not found.");
 
             _ctx.GroupSubjects.Remove(assignment);
             await _ctx.SaveChangesAsync(cancellationToken);

@@ -68,13 +68,4 @@ public class GroupController : ControllerBase
         var result = await _mediator.Send(new GetSubjectsForGroup.Query(groupId));
         return Ok(result);
     }
-    
-    [HttpDelete("{groupId:int}/subjects/{subjectId:int}/teachers/{teacherId:int}")]
-    [ProducesResponseType(StatusCodes.Status204NoContent)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UnassignSubjectFromGroup(int groupId, int subjectId, int teacherId)
-    {
-        await _mediator.Send(new UnassignSubjectFromGroup.Command(groupId, subjectId, teacherId));
-        return NoContent();
-    }
 }
