@@ -15,14 +15,17 @@ public class TeacherSubjectConfiguration : IEntityTypeConfiguration<TeacherSubje
         
         builder.HasOne(ts => ts.Teacher)
             .WithMany(t => t.TeacherSubjects)
-            .HasForeignKey(ts => ts.TeacherId);
+            .HasForeignKey(ts => ts.TeacherId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         builder.HasOne(ts => ts.Subject)
             .WithMany(s => s.TeacherSubjects)
-            .HasForeignKey(ts => ts.SubjectId);
+            .HasForeignKey(ts => ts.SubjectId)
+            .OnDelete(DeleteBehavior.Cascade);
         
         builder.HasOne(ts => ts.SocialMediaType)
             .WithMany()
-            .HasForeignKey(ts => ts.SocialMediaTypeId);
+            .HasForeignKey(ts => ts.SocialMediaTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
