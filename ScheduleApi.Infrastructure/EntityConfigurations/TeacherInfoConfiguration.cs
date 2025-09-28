@@ -12,10 +12,12 @@ public class TeacherInfoConfiguration : IEntityTypeConfiguration<TeacherInfo>
 
         builder.HasOne(ti => ti.Teacher)
             .WithMany(t => t.TeacherInfos)
-            .HasForeignKey(ti => ti.TeacherId);
+            .HasForeignKey(ti => ti.TeacherId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(ti => ti.InfoType)
             .WithMany(it => it.TeacherInfos)
-            .HasForeignKey(ti => ti.InfoTypeId);
+            .HasForeignKey(ti => ti.InfoTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

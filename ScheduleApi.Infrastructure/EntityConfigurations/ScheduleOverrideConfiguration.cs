@@ -13,16 +13,19 @@ public class ScheduleOverrideConfiguration : IEntityTypeConfiguration<ScheduleOv
 
         builder.HasOne(so => so.OverrideType)
             .WithMany(ot => ot.ScheduleOverrides)
-            .HasForeignKey(so => so.OverrideTypeId);
+            .HasForeignKey(so => so.OverrideTypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(so => so.SubstituteDayOfWeek)
             .WithMany(d => d.ScheduleOverrides)
             .HasForeignKey(so => so.SubstituteDayOfWeekId)
-            .IsRequired(false);;
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(so => so.Group)
             .WithMany(g => g.ScheduleOverrides)
             .HasForeignKey(so => so.GroupId)
-            .IsRequired(false);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
