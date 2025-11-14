@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Subject;
@@ -24,19 +25,18 @@ public static class GetSubjectById
 
         public async Task<SubjectDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var subject = await _ctx.Subjects
+            var subjectDto = await _ctx.Subjects
                 .AsNoTracking()
-                .Include(s => s.SubjectType)
-                .Include(s => s.SubjectInfos)
-                .ThenInclude(si => si.InfoType)
-                .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
+                .Where(s => s.Id == request.Id)
+                .ProjectTo<SubjectDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (subject is null)
+            if (subjectDto is null)
             {
-                throw new NotFoundException("Subject not found");
+                throw new NotFoundException($"Subject with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<SubjectDto>(subject);
+            return subjectDto;
         }
     }
 }

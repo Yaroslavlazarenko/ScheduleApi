@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.OverrideType;
@@ -24,16 +25,18 @@ public static class GetOverrideTypeById
 
         public async Task<OverrideTypeDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var overrideType = await _ctx.OverrideTypes
+            var overrideTypeDto = await _ctx.OverrideTypes
                 .AsNoTracking()
-                .FirstOrDefaultAsync(ot => ot.Id == request.Id, cancellationToken);
+                .Where(ot => ot.Id == request.Id)
+                .ProjectTo<OverrideTypeDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (overrideType is null)
+            if (overrideTypeDto is null)
             {
-                throw new NotFoundException("Override type not found");
+                throw new NotFoundException($"Override type with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<OverrideTypeDto>(overrideType);
+            return overrideTypeDto;
         }
     }
 }

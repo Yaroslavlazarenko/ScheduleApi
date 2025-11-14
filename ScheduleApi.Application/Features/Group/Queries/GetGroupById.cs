@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Group;
@@ -24,16 +25,18 @@ public static class GetGroupById
 
         public async Task<GroupDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var group = await _ctx.Groups
+            var groupDto = await _ctx.Groups
                 .AsNoTracking()
-                .FirstOrDefaultAsync(g => g.Id == request.Id, cancellationToken);
+                .Where(g => g.Id == request.Id)
+                .ProjectTo<GroupDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (group is null)
+            if (groupDto is null)
             {
-                throw new NotFoundException("Group not found");
+                throw new NotFoundException($"Group with ID {request.Id} not found.");
             }
             
-            return _mapper.Map<GroupDto>(group);
+            return groupDto;
         }
     }
 }

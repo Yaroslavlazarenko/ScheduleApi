@@ -2,6 +2,7 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using ScheduleApi.Application;
+using ScheduleApi.Application.Services;
 using ScheduleApi.ExceptionHandlers;
 using ScheduleApi.Extensions;
 using ScheduleApi.Middleware;
@@ -14,6 +15,7 @@ builder.Services.AddAuthorization();
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
+builder.Services.AddScoped<IScheduleTimeContextService, ScheduleTimeContextService>();
 builder.Services.AddDbContext<ScheduleContext>(options => options.UseNpgsql(connectionString));
 
 builder.Services.AddGlobalExceptionHandlers();

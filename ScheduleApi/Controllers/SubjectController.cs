@@ -29,7 +29,7 @@ public class SubjectController : ControllerBase
     }
 
     [HttpGet]
-    [ProducesResponseType(typeof(List<GroupedSubjectDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(List<SubjectNameDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetSubjects()
     {
         var result = await _mediator.Send(new GetSubjectsList.Query());

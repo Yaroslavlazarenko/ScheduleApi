@@ -10,9 +10,9 @@ namespace ScheduleApi.Application.Features.Subject.Queries;
 
 public static class GetSubjectsList
 {
-    public record Query() : IRequest<List<GroupedSubjectDto>>;
+    public record Query() : IRequest<List<SubjectNameDto>>;
 
-    private class Handler : IRequestHandler<Query, List<GroupedSubjectDto>>
+    private class Handler : IRequestHandler<Query, List<SubjectNameDto>>
     {
         private readonly ScheduleContext _ctx;
         private readonly IMapper _mapper;
@@ -23,21 +23,13 @@ public static class GetSubjectsList
             _mapper = mapper;
         }
 
-        public async Task<List<GroupedSubjectDto>> Handle(Query request, CancellationToken cancellationToken)
+        public async Task<List<SubjectNameDto>> Handle(Query request, CancellationToken cancellationToken)
         {
-            var subjectNameGroups = await _ctx.SubjectNames
+            return await _ctx.SubjectNames
                 .AsNoTracking()
                 .OrderBy(sn => sn.FullName)
-                .Select(sn => new GroupedSubjectDto
-                {
-                    SubjectNameId = sn.Id,
-                    Name = sn.FullName,
-                    ShortName = sn.ShortName,
-                    Abbreviation = sn.Abbreviation
-                })
+                .ProjectTo<SubjectNameDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
-
-            return subjectNameGroups;
         }
     }
 }

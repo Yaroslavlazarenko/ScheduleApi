@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Region;
@@ -24,16 +25,18 @@ public static class GetRegionById
 
         public async Task<RegionDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var region = await _ctx.Regions
+            var regionDto = await _ctx.Regions
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
+                .Where(r => r.Id == request.Id)
+                .ProjectTo<RegionDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (region is null)
+            if (regionDto is null)
             {
-                throw new NotFoundException("Region not found");
+                throw new NotFoundException($"Region with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<RegionDto>(region);
+            return regionDto;
         }
     }
 }

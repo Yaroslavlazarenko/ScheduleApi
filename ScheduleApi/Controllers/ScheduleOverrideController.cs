@@ -1,5 +1,6 @@
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
+using ScheduleApi.Application.DTOs.Schedule;
 using ScheduleApi.Application.DTOs.ScheduleOverride;
 using ScheduleApi.Application.Features.ScheduleOverride.Commands;
 using ScheduleApi.Application.Features.ScheduleOverride.Queries;
@@ -29,9 +30,10 @@ public class ScheduleOverrideController : ControllerBase
 
     [HttpGet]
     [ProducesResponseType(typeof(List<ScheduleOverrideDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetScheduleOverrides([FromQuery] DateTime? startDate, [FromQuery] DateTime? endDate, [FromQuery] int? groupId)
+    public async Task<IActionResult> GetScheduleOverrides([FromQuery] ScheduleOverrideFilterDto filter)
     {
-        var result = await _mediator.Send(new GetScheduleOverridesList.Query(startDate, endDate, groupId));
+        var query = new GetScheduleOverridesList.Query(filter);
+        var result = await _mediator.Send(query);
         return Ok(result);
     }
     

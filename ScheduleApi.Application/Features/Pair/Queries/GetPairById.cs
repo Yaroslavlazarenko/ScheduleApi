@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Pair;
@@ -24,16 +25,18 @@ public static class GetPairById
 
         public async Task<PairDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var pair = await _ctx.Pairs
+            var pairDto = await _ctx.Pairs
                 .AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == request.Id, cancellationToken);
+                .Where(p => p.Id == request.Id)
+                .ProjectTo<PairDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (pair is null)
+            if (pairDto is null)
             {
-                throw new NotFoundException("Pair not found");
+                throw new NotFoundException($"Pair with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<PairDto>(pair);
+            return pairDto;
         }
     }
 }

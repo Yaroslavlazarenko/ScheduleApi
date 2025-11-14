@@ -1,9 +1,6 @@
-using AutoMapper;
-using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Schedule;
-using ScheduleApi.Application.DTOs.ScheduleOverride;
 using ScheduleApi.Core.Exceptions;
 using ScheduleBotApi.Infrastructure.Contexts;
 
