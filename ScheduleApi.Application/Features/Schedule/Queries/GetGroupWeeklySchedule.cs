@@ -97,19 +97,19 @@ public static class GetGroupWeeklySchedule
         /// </summary>
         private async Task<WeeklyScheduleRawData> FetchWeeklyScheduleDataAsync(Query request, Core.Entities.Semester semester, DateTime startOfWeekUtc, DateTime endOfWeekUtc, CancellationToken cancellationToken)
         {
-            var overridesTask = _ctx.ScheduleOverrides.AsNoTracking()
+            // Выполняем запросы ПОСЛЕДОВАТЕЛЬНО, один за другим.
+    
+            var overrides = await _ctx.ScheduleOverrides.AsNoTracking()
                 .Include(so => so.SubstituteDayOfWeek)
                 .Where(so => so.OverrideDate >= startOfWeekUtc && so.OverrideDate < endOfWeekUtc && (so.GroupId == request.GroupId || so.GroupId == null))
                 .ToListAsync(cancellationToken);
 
-            var lessonsTask = _ctx.Schedules.AsNoTracking()
+            var lessons = await _ctx.Schedules.AsNoTracking()
                 .Where(s => s.GroupSubject.GroupId == request.GroupId && s.GroupSubject.SemesterId == semester.Id)
                 .ProjectTo<ScheduleDataDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
 
-            await Task.WhenAll(overridesTask, lessonsTask);
-
-            return new WeeklyScheduleRawData(overridesTask.Result, lessonsTask.Result);
+            return new WeeklyScheduleRawData(overrides, lessons);
         }
 
         // 4. МЕТОД ДЛЯ СБОРКИ РАСПИСАНИЯ
