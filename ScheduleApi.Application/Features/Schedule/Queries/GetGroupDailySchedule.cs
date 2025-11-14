@@ -71,22 +71,19 @@ public static class GetGroupDailySchedule
         /// </summary>
         private async Task<SchedulePrerequisites> GetSchedulePrerequisitesAsync(int groupId, ScheduleTimeContext timeContext, CancellationToken cancellationToken)
         {
-            var groupTask = _ctx.Groups.AsNoTracking()
-                .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken);
-                
+            var group = await _ctx.Groups.AsNoTracking()
+                            .FirstOrDefaultAsync(g => g.Id == groupId, cancellationToken)
+                        ?? throw new NotFoundException($"Group with ID {groupId} was not found.");
+            
             var dayOfWeekId = (int)timeContext.AuthoritativeTime.DayOfWeek == 0 ? 7 : (int)timeContext.AuthoritativeTime.DayOfWeek;
-            var dayOfWeekTask = _ctx.ApplicationDaysOfWeek.FindAsync([dayOfWeekId], cancellationToken: cancellationToken).AsTask();
+            var dayOfWeek = await _ctx.ApplicationDaysOfWeek.FindAsync([dayOfWeekId], cancellationToken: cancellationToken);
 
-            var semesterTask = _ctx.Semesters.AsNoTracking()
+            var semester = await _ctx.Semesters.AsNoTracking()
                 .FirstOrDefaultAsync(s => s.StartDate <= timeContext.StartOfDayUtc && s.EndDate >= timeContext.StartOfDayUtc, cancellationToken);
-
-            await Task.WhenAll(groupTask, dayOfWeekTask, semesterTask);
-
-            var group = await groupTask ?? throw new NotFoundException($"Group with ID {groupId} was not found.");
-
-            return new SchedulePrerequisites(group, await dayOfWeekTask, await semesterTask);
+        
+            return new SchedulePrerequisites(group, dayOfWeek, semester);
         }
-
+        
         // 3. МЕТОД ДЛЯ БИЗНЕС-ЛОГИКИ ВРЕМЕНИ
         /// <summary>
         /// Рассчитывает номер и четность недели на основе семестра и целевой даты.
