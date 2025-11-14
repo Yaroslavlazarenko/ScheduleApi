@@ -1,9 +1,12 @@
+
 using AutoMapper;
 using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Schedule;
 using ScheduleApi.Application.DTOs.ScheduleOverride;
+using ScheduleApi.Application.Services;
+using ScheduleApi.Core.Entities;
 using ScheduleApi.Core.Exceptions;
 using ScheduleBotApi.Infrastructure.Contexts;
 
@@ -13,83 +16,135 @@ public static class GetGroupWeeklySchedule
 {
     public record Query(int GroupId, string TimeZoneId, DateTime? TargetDate) : IRequest<WeeklyScheduleDto>;
 
+    // Вспомогательный record для передачи сырых данных между методами
+    private record WeeklyScheduleRawData(
+        List<Core.Entities.ScheduleOverride> Overrides,
+        List<ScheduleDataDto> AllPossibleLessons
+    );
+    
     private class Handler : IRequestHandler<Query, WeeklyScheduleDto>
     {
         private readonly ScheduleContext _ctx;
         private readonly IMapper _mapper;
+        private readonly IScheduleTimeContextService _timeContextService;
 
-        public Handler(ScheduleContext ctx, IMapper mapper)
+        public Handler(ScheduleContext ctx, IMapper mapper, IScheduleTimeContextService timeContextService)
         {
             _ctx = ctx;
             _mapper = mapper;
+            _timeContextService = timeContextService;
         }
 
+        // 1. МЕТОД-ОРКЕСТРАТОР
         public async Task<WeeklyScheduleDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var group = await _ctx.Groups.AsNoTracking().FirstOrDefaultAsync(g => g.Id == request.GroupId, cancellationToken);
-            if (group is null) throw new NotFoundException($"Group with ID {request.GroupId} was not found.");
+            var group = await _ctx.Groups.AsNoTracking().FirstOrDefaultAsync(g => g.Id == request.GroupId, cancellationToken)
+                ?? throw new NotFoundException($"Group with ID {request.GroupId} was not found.");
 
-            var groupTimeZone = FindTimeZone(request.TimeZoneId);
-            var mondayOfTargetWeek = GetMondayOfTargetWeek(request.TargetDate ?? DateTime.UtcNow, groupTimeZone);
-            var sundayOfTargetWeek = mondayOfTargetWeek.AddDays(6);
-            
-            var mondayUtc = TimeZoneInfo.ConvertTimeToUtc(mondayOfTargetWeek);
-            var sundayUtc = TimeZoneInfo.ConvertTimeToUtc(sundayOfTargetWeek.AddDays(1).AddTicks(-1));
+            var timeContext = _timeContextService.CreateContext(request.TargetDate, request.TimeZoneId);
+            var authoritativeTimeZone = _timeContextService.GetAuthoritativeTimeZone();
+            var (startOfWeek, endOfWeek) = GetAuthoritativeWeekBoundaries(timeContext, authoritativeTimeZone);
 
             var semester = await _ctx.Semesters.AsNoTracking()
-                .FirstOrDefaultAsync(s => s.StartDate <= mondayUtc && s.EndDate >= mondayUtc, cancellationToken);
+                .FirstOrDefaultAsync(s => s.StartDate < endOfWeek.UtcDateTime && s.EndDate >= startOfWeek.UtcDateTime, cancellationToken);
 
             if (semester is null)
-                return CreateEmptyWeeklySchedule(request, group, mondayOfTargetWeek);
+                return CreateEmptyWeeklySchedule(group, startOfWeek.DateTime);
 
-            var overridesForWeek = await _ctx.ScheduleOverrides.AsNoTracking()
+            // Получаем все данные одним вызовом
+            var rawData = await FetchWeeklyScheduleDataAsync(request, semester, startOfWeek.UtcDateTime, endOfWeek.UtcDateTime, cancellationToken);
+            
+            // Получаем дни недели один раз
+            var daysOfWeek = await _ctx.ApplicationDaysOfWeek.AsNoTracking().OrderBy(d => d.Id).ToListAsync(cancellationToken);
+
+            // Собираем расписание из сырых данных
+            var dailySchedules = BuildDailySchedules(rawData, group, semester, startOfWeek.DateTime, daysOfWeek, authoritativeTimeZone);
+
+            var firstDaySchedule = dailySchedules.First();
+
+            return new WeeklyScheduleDto
+            {
+                GroupName = group.Name,
+                WeekStartDate = DateOnly.FromDateTime(startOfWeek.DateTime),
+                WeekEndDate = DateOnly.FromDateTime(startOfWeek.DateTime.AddDays(6)),
+                WeekNumber = firstDaySchedule.WeekNumber,
+                IsEvenWeek = firstDaySchedule.IsEvenWeek,
+                TimeZoneId = request.TimeZoneId,
+                DailySchedules = dailySchedules
+            };
+        }
+
+        // 2. МЕТОД ДЛЯ ВЫЧИСЛЕНИЯ ГРАНИЦ НЕДЕЛИ
+        /// <summary>
+        /// Вычисляет начало (понедельник 00:00) и конец (следующий понедельник 00:00) недели в авторитетном часовом поясе.
+        /// </summary>
+        private (DateTimeOffset Start, DateTimeOffset End) GetAuthoritativeWeekBoundaries(ScheduleTimeContext timeContext, TimeZoneInfo authoritativeTimeZone)
+        {
+            var targetDay = timeContext.AuthoritativeTime;
+            int diff = (7 + (int)targetDay.DayOfWeek - (int)DayOfWeek.Monday) % 7;
+            var startOfWeek = targetDay.AddDays(-1 * diff).Date;
+            var endOfWeek = startOfWeek.AddDays(7);
+
+            return (
+                new DateTimeOffset(startOfWeek, authoritativeTimeZone.GetUtcOffset(startOfWeek)),
+                new DateTimeOffset(endOfWeek, authoritativeTimeZone.GetUtcOffset(endOfWeek))
+            );
+        }
+
+        // 3. МЕТОД ДЛЯ ПОЛУЧЕНИЯ ДАННЫХ ИЗ БД
+        /// <summary>
+        /// Извлекает все необходимые сырые данные (замены и занятия) для указанной недели одним пакетом.
+        /// </summary>
+        private async Task<WeeklyScheduleRawData> FetchWeeklyScheduleDataAsync(Query request, Core.Entities.Semester semester, DateTime startOfWeekUtc, DateTime endOfWeekUtc, CancellationToken cancellationToken)
+        {
+            var overridesTask = _ctx.ScheduleOverrides.AsNoTracking()
                 .Include(so => so.SubstituteDayOfWeek)
-                .Where(so => so.OverrideDate >= mondayUtc && so.OverrideDate <= sundayUtc && (so.GroupId == request.GroupId || so.GroupId == null))
-                .ToDictionaryAsync(so => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(so.OverrideDate, groupTimeZone)), cancellationToken);
+                .Where(so => so.OverrideDate >= startOfWeekUtc && so.OverrideDate < endOfWeekUtc && (so.GroupId == request.GroupId || so.GroupId == null))
+                .ToListAsync(cancellationToken);
 
-            var allPossibleLessons = await _ctx.Schedules.AsNoTracking()
+            var lessonsTask = _ctx.Schedules.AsNoTracking()
                 .Where(s => s.GroupSubject.GroupId == request.GroupId && s.GroupSubject.SemesterId == semester.Id)
                 .ProjectTo<ScheduleDataDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
 
+            await Task.WhenAll(overridesTask, lessonsTask);
+
+            return new WeeklyScheduleRawData(overridesTask.Result, lessonsTask.Result);
+        }
+
+        // 4. МЕТОД ДЛЯ СБОРКИ РАСПИСАНИЯ
+        /// <summary>
+        /// Собирает список DTO дневных расписаний из сырых данных. Не выполняет запросов к БД.
+        /// </summary>
+        private List<DailyScheduleDto> BuildDailySchedules(WeeklyScheduleRawData rawData, Core.Entities.Group group, Core.Entities.Semester semester, DateTime startOfWeekInUkraine, List<Core.Entities.ApplicationDayOfWeek> daysOfWeek, TimeZoneInfo authoritativeTimeZone)
+        {
+            var overridesMap = rawData.Overrides.ToDictionary(
+                so => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(so.OverrideDate, authoritativeTimeZone)), 
+                so => so
+            );
+            
+            var semesterStartDate = DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(semester.StartDate.ToUniversalTime(), authoritativeTimeZone));
             var dailySchedules = new List<DailyScheduleDto>();
-            var weekNumber = 0;
-            var isEvenWeek = false;
 
             for (int i = 0; i < 7; i++)
             {
-                var currentDate = mondayOfTargetWeek.AddDays(i);
-                var currentDateOnly = DateOnly.FromDateTime(currentDate);
-
-                if (i == 0)
-                {
-                    var semesterStartDate = DateOnly.FromDateTime(semester.StartDate.ToUniversalTime());
-                    weekNumber = CalculateWeekNumber(semesterStartDate, currentDateOnly);
-                    isEvenWeek = (weekNumber % 2) == 0;
-                }
+                var currentDateInUkraine = startOfWeekInUkraine.AddDays(i);
+                var currentDateOnly = DateOnly.FromDateTime(currentDateInUkraine);
                 
-                var dayOfWeekEntity = await _ctx.ApplicationDaysOfWeek.AsNoTracking().FirstAsync(d => d.Id == (i + 1), cancellationToken);
-                overridesForWeek.TryGetValue(currentDateOnly, out var scheduleOverride);
-                var dayOfWeekToQuery = scheduleOverride?.SubstituteDayOfWeekId ?? dayOfWeekEntity.Id;
+                var weekNumber = CalculateWeekNumber(semesterStartDate, currentDateOnly);
+                var isEvenWeek = (weekNumber % 2) == 0;
                 
-                var lessonsForDayData = new List<ScheduleDataDto>();
-                if (scheduleOverride is null || scheduleOverride.SubstituteDayOfWeekId.HasValue)
-                {
-                    lessonsForDayData = allPossibleLessons
-                        .Where(l => l.ApplicationDayOfWeekId == dayOfWeekToQuery && l.IsEvenWeek == isEvenWeek)
+                var dayOfWeekEntity = daysOfWeek[i]; // Используем предзагруженный список
+                overridesMap.TryGetValue(currentDateOnly, out var scheduleOverride);
+                
+                var dayOfWeekToQueryId = scheduleOverride?.SubstituteDayOfWeekId ?? dayOfWeekEntity.Id;
+                
+                var lessonsForDay = (scheduleOverride is null || scheduleOverride.SubstituteDayOfWeekId.HasValue)
+                    ? rawData.AllPossibleLessons
+                        .Where(l => l.ApplicationDayOfWeekId == dayOfWeekToQueryId && l.IsEvenWeek == isEvenWeek)
                         .OrderBy(l => l.PairNumber)
-                        .ToList();
-                }
-                
-                var lessonsForDayDto = _mapper.Map<List<LessonDto>>(lessonsForDayData);
-                
-                foreach (var lesson in lessonsForDayDto)
-                {
-                    var startUtc = new DateTimeOffset(currentDateOnly.ToDateTime(lesson.PairStartTime), TimeSpan.Zero);
-                    var endUtc = new DateTimeOffset(currentDateOnly.ToDateTime(lesson.PairEndTime), TimeSpan.Zero);
-                    lesson.PairStartTime = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(startUtc, groupTimeZone).DateTime);
-                    lesson.PairEndTime = TimeOnly.FromDateTime(TimeZoneInfo.ConvertTime(endUtc, groupTimeZone).DateTime);
-                }
+                        .ToList()
+                    : new List<ScheduleDataDto>();
                 
                 dailySchedules.Add(new DailyScheduleDto
                 {
@@ -99,36 +154,15 @@ public static class GetGroupWeeklySchedule
                     GroupName = group.Name,
                     WeekNumber = weekNumber,
                     IsEvenWeek = isEvenWeek,
-                    Lessons = lessonsForDayDto,
+                    Lessons = _mapper.Map<List<LessonDto>>(lessonsForDay),
                     OverrideInfo = _mapper.Map<ScheduleOverrideInfoDto>(scheduleOverride)
                 });
             }
-            
-            return new WeeklyScheduleDto
-            {
-                GroupName = group.Name,
-                WeekStartDate = DateOnly.FromDateTime(mondayOfTargetWeek),
-                WeekEndDate = DateOnly.FromDateTime(sundayOfTargetWeek),
-                WeekNumber = weekNumber,
-                IsEvenWeek = isEvenWeek,
-                TimeZoneId = request.TimeZoneId,
-                DailySchedules = dailySchedules
-            };
+
+            return dailySchedules;
         }
 
-        private TimeZoneInfo FindTimeZone(string timeZoneId)
-        {
-            try { return TimeZoneInfo.FindSystemTimeZoneById(timeZoneId); }
-            catch (TimeZoneNotFoundException) { throw new BadRequestException("Invalid TimeZoneId provided."); }
-        }
-        
-        private DateTime GetMondayOfTargetWeek(DateTime targetUtc, TimeZoneInfo timeZone)
-        {
-            var targetLocalTime = TimeZoneInfo.ConvertTimeFromUtc(targetUtc, timeZone);
-            int diff = (7 + (int)targetLocalTime.DayOfWeek - (int)DayOfWeek.Monday) % 7;
-            return targetLocalTime.AddDays(-1 * diff).Date;
-        }
-        
+        // Вспомогательные методы остаются без изменений
         private int CalculateWeekNumber(DateOnly semesterStart, DateOnly targetDate)
         {
             var startDayOfWeek = (int)semesterStart.DayOfWeek == 0 ? 7 : (int)semesterStart.DayOfWeek;
@@ -138,14 +172,13 @@ public static class GetGroupWeeklySchedule
             return totalDays < 0 ? 1 : (totalDays / 7) + 1;
         }
 
-        private WeeklyScheduleDto CreateEmptyWeeklySchedule(Query request, Core.Entities.Group group, DateTime monday)
+        private WeeklyScheduleDto CreateEmptyWeeklySchedule(Core.Entities.Group group, DateTime mondayInUkraine)
         {
             return new WeeklyScheduleDto
             {
                 GroupName = group.Name,
-                WeekStartDate = DateOnly.FromDateTime(monday),
-                WeekEndDate = DateOnly.FromDateTime(monday.AddDays(6)),
-                WeekNumber = 1, IsEvenWeek = false, TimeZoneId = request.TimeZoneId,
+                WeekStartDate = DateOnly.FromDateTime(mondayInUkraine),
+                WeekEndDate = DateOnly.FromDateTime(mondayInUkraine.AddDays(6)),
                 DailySchedules = new List<DailyScheduleDto>()
             };
         }

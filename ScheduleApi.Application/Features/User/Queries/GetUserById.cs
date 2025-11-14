@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.User;
@@ -24,16 +25,16 @@ public static class GetUserById
 
         public async Task<UserDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var user = await _ctx.Users
+            var userDto = await _ctx.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.Id == request.Id, cancellationToken);
+                .Where(u => u.Id == request.Id)
+                .ProjectTo<UserDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
             
-            if (user is null)
+            if (userDto is null)
             {
-                throw new NotFoundException("Not found user");
+                throw new NotFoundException($"User with ID {request.Id} not found.");
             }
-            
-            var userDto = _mapper.Map<UserDto>(user);
             
             return userDto;
         }

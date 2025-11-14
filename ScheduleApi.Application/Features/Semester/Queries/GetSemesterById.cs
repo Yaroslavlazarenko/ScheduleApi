@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Semester;
@@ -24,16 +25,18 @@ public static class GetSemesterById
 
         public async Task<SemesterDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var semester = await _ctx.Semesters
+            var semesterDto = await _ctx.Semesters
                 .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
+                .Where(s => s.Id == request.Id)
+                .ProjectTo<SemesterDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (semester is null)
+            if (semesterDto is null)
             {
-                throw new NotFoundException("Semester not found");
+                throw new NotFoundException($"Semester with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<SemesterDto>(semester);
+            return semesterDto;
         }
     }
 }

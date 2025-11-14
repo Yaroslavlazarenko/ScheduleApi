@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.InfoType;
@@ -24,16 +25,19 @@ public static class GetInfoTypeById
 
         public async Task<InfoTypeDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var infoType = await _ctx.InfoTypes
+            var infoTypeDto = await _ctx.InfoTypes
                 .AsNoTracking()
-                .FirstOrDefaultAsync(it => it.Id == request.Id, cancellationToken);
+                .Where(it => it.Id == request.Id)
+                .ProjectTo<InfoTypeDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (infoType is null)
+            if (infoTypeDto is null)
             {
-                throw new NotFoundException("InfoType not found");
+                // Рекомендуется делать сообщения об ошибках более информативными
+                throw new NotFoundException($"InfoType with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<InfoTypeDto>(infoType);
+            return infoTypeDto;
         }
     }
 }

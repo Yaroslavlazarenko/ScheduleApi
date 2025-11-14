@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Subject;
@@ -24,32 +25,23 @@ public static class GetSubjectDetails
 
         public async Task<SubjectDetailsDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var subject = await _ctx.Subjects
-                .Include(s => s.SubjectType)
-                .Include(s => s.SubjectInfos)
-                .ThenInclude(si => si.InfoType)
-                .Include(s => s.TeacherSubjects
-                    .Where(ts => !request.GroupId.HasValue || 
-                                 ts.GroupSubjects.Any(gs => gs.GroupId == request.GroupId.Value)))
-                .ThenInclude(ts => ts.Teacher)
-                .ThenInclude(t => t.TeacherInfos)
-                .ThenInclude(ti => ti.InfoType)
-        
+            var resultDto = await _ctx.Subjects
                 .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.Id == request.Id, cancellationToken);
-            
-            if (subject is null)
+                .Where(s => s.Id == request.Id)
+                .ProjectTo<SubjectDetailsDto>(_mapper.ConfigurationProvider,
+                    new { groupId = request.GroupId }) 
+                .FirstOrDefaultAsync(cancellationToken);
+
+            if (resultDto is null)
             {
                 throw new NotFoundException($"Subject with id {request.Id} not found");
             }
-
-            if (request.GroupId.HasValue && !subject.TeacherSubjects.Any())
+            
+            if (request.GroupId.HasValue && !resultDto.Teachers.Any())
             {
                 throw new NotFoundException($"Subject with id {request.Id} has no teachers assigned for group with id {request.GroupId.Value}");
             }
     
-            var resultDto = _mapper.Map<SubjectDetailsDto>(subject);
-
             return resultDto;
         }
     }

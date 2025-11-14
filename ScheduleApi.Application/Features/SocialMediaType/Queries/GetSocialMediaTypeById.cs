@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.SocialMediaType;
@@ -24,16 +25,18 @@ public static class GetSocialMediaTypeById
 
         public async Task<SocialMediaTypeDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var socialMediaType = await _ctx.SocialMediaTypes
+            var socialMediaTypeDto = await _ctx.SocialMediaTypes
                 .AsNoTracking()
-                .FirstOrDefaultAsync(smt => smt.Id == request.Id, cancellationToken);
+                .Where(smt => smt.Id == request.Id)
+                .ProjectTo<SocialMediaTypeDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (socialMediaType is null)
+            if (socialMediaTypeDto is null)
             {
-                throw new NotFoundException("SocialMediaType not found");
+                throw new NotFoundException($"SocialMediaType with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<SocialMediaTypeDto>(socialMediaType);
+            return socialMediaTypeDto;
         }
     }
 }

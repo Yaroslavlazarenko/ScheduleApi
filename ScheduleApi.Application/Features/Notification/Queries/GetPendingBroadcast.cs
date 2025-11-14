@@ -32,7 +32,7 @@ public static class GetPendingBroadcast
             var users = await _ctx.Users
                 .AsNoTracking()
                 .Where(u => u.TelegramId.HasValue)
-                .Select(u => new UserBroadcastTargetDto { TelegramId = u.TelegramId.Value })
+                .Select(u => new UserBroadcastTargetDto { TelegramId = u.TelegramId!.Value })
                 .ToListAsync(cancellationToken);
 
             return new PendingBroadcastDto

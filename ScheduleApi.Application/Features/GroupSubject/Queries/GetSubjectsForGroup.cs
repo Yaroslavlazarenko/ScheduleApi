@@ -26,14 +26,11 @@ public static class GetSubjectsForGroup
         public async Task<List<GroupSubjectDto>> Handle(Query request, CancellationToken cancellationToken)
         {
             if (!await _ctx.Groups.AnyAsync(g => g.Id == request.GroupId, cancellationToken))
-                throw new NotFoundException("Group not found");
-
+                throw new NotFoundException($"Group with ID {request.GroupId} not found.");
+            
             var list = await _ctx.GroupSubjects
                 .AsNoTracking()
                 .Where(gs => gs.GroupId == request.GroupId)
-                .Include(gs => gs.Semester)
-                .Include(gs => gs.TeacherSubject).ThenInclude(ts => ts.Teacher)
-                .Include(gs => gs.TeacherSubject).ThenInclude(ts => ts.Subject).ThenInclude(s => s.SubjectName)
                 .ProjectTo<GroupSubjectDto>(_mapper.ConfigurationProvider)
                 .ToListAsync(cancellationToken);
 

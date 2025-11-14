@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.User;
@@ -24,16 +25,18 @@ public static class GetUserByTelegramId
 
         public async Task<UserDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var user = await _ctx.Users
+            var userDto = await _ctx.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync(u => u.TelegramId == request.TelegramId, cancellationToken);
+                .Where(u => u.TelegramId == request.TelegramId)
+                .ProjectTo<UserDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (user is null)
+            if (userDto is null)
             {
-                throw new NotFoundException("User not found");
+                throw new NotFoundException($"User with Telegram ID {request.TelegramId} not found.");
             }
             
-            return _mapper.Map<UserDto>(user);
+            return userDto;
         }
     }
 }

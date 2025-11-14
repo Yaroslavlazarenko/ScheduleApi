@@ -1,6 +1,6 @@
 namespace ScheduleApi.Application.DTOs.Subject;
 
-public class GroupedSubjectDto
+public class SubjectNameDto
 {
     public int SubjectNameId { get; set; }
     public string Name { get; set; }

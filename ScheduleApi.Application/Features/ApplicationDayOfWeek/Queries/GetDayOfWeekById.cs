@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.DayOfWeek;
@@ -24,16 +25,18 @@ public static class GetDayOfWeekById
 
         public async Task<DayOfWeekDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var dayOfWeek = await _ctx.ApplicationDaysOfWeek
+            var dayOfWeekDto = await _ctx.ApplicationDaysOfWeek
                 .AsNoTracking()
-                .FirstOrDefaultAsync(d => d.Id == request.Id, cancellationToken);
+                .Where(d => d.Id == request.Id)
+                .ProjectTo<DayOfWeekDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (dayOfWeek is null)
+            if (dayOfWeekDto is null)
             {
-                throw new NotFoundException("Day of week not found");
+                throw new NotFoundException($"Day of week with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<DayOfWeekDto>(dayOfWeek);
+            return dayOfWeekDto;
         }
     }
 }

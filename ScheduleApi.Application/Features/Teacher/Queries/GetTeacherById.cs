@@ -1,4 +1,5 @@
 using AutoMapper;
+using AutoMapper.QueryableExtensions;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using ScheduleApi.Application.DTOs.Teacher;
@@ -24,18 +25,20 @@ public static class GetTeacherById
 
         public async Task<TeacherDto> Handle(Query request, CancellationToken cancellationToken)
         {
-            var teacher = await _ctx.Teachers
+            // ОПТИМИЗИРОВАННЫЙ ВАРИАНТ:
+            // .Include() и последующий .Map() заменены на один вызов .ProjectTo()
+            var teacherDto = await _ctx.Teachers
                 .AsNoTracking()
-                .Include(t => t.TeacherInfos)
-                .ThenInclude(ti => ti.InfoType)
-                .FirstOrDefaultAsync(t => t.Id == request.Id, cancellationToken);
+                .Where(t => t.Id == request.Id)
+                .ProjectTo<TeacherDto>(_mapper.ConfigurationProvider)
+                .FirstOrDefaultAsync(cancellationToken);
 
-            if (teacher is null)
+            if (teacherDto is null)
             {
-                throw new NotFoundException("Teacher not found");
+                throw new NotFoundException($"Teacher with ID {request.Id} not found.");
             }
 
-            return _mapper.Map<TeacherDto>(teacher);
+            return teacherDto;
         }
     }
 }
