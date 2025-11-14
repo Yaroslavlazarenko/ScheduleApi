@@ -43,6 +43,7 @@ public class SubjectNameMappingProfile : Profile
             // и автоматически применит ваш существующий маппинг Teacher -> TeacherDto.
             
         CreateMap<SubjectName, SubjectNameDto>()
-            .ForMember(dest => dest.SubjectNameId, opt => opt.MapFrom(src => src.Id));
+            .ForMember(dest => dest.SubjectNameId, opt => opt.MapFrom(src => src.Id))
+            .ForMember(dest => dest.Name, opt => opt.MapFrom(src => src.FullName));
     }
 }
